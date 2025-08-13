@@ -7,16 +7,22 @@ mkdir -p bin
 
 # Compilation avec Mono
 echo "📦 Compilation des modules..."
-mcs -out:bin/CompensationAltimetrique.exe \
-    -target:exe \
-    -reference:System.Data.dll \
-    -reference:System.Xml.dll \
-    -reference:System.Core.dll \
-    src/CompensationAltimetrique.Console/*.cs \
-    src/CompensationAltimetrique.Core/**/*.cs \
-    src/CompensationAltimetrique.Data/**/*.cs \
-    src/CompensationAltimetrique.Calculations/**/*.cs \
-    2>/dev/null
+# Trouver tous les fichiers .cs
+find src -name "*.cs" > /tmp/cs_files.txt
+
+if [ -s /tmp/cs_files.txt ]; then
+    mcs -out:bin/CompensationAltimetrique.exe \
+        -target:exe \
+        -reference:System.Data.dll \
+        -reference:System.Xml.dll \
+        -reference:System.Core.dll \
+        $(cat /tmp/cs_files.txt | tr '\n' ' ') \
+        2>/dev/null
+    rm /tmp/cs_files.txt
+else
+    echo "❌ Aucun fichier .cs trouvé"
+    exit 1
+fi
 
 if [ $? -eq 0 ]; then
     echo "✅ Compilation réussie !"
