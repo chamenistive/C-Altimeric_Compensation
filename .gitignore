@@ -1,0 +1,38 @@
+# Mono/C# binaires
+bin/*.exe
+bin/*.dll
+bin/*.pdb
+bin/*.mdb
+obj/
+*.exe
+*.dll
+*.pdb
+*.mdb
+*.userprefs
+*.pidb
+*.suo
+*.user
+*.cache
+
+# NuGet packages
+packages/
+*.nupkg
+
+# IDE files
+.vs/
+.vscode/
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs et temporaires
+*.log
+logs/
+tmp/
+
+# Test results
+TestResults/
+coverage/
