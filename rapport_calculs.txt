@@ -1,0 +1,46 @@
+============================================================
+    RAPPORT DE CALCULS - NIVELLEMENT GÉOMÉTRIQUE
+============================================================
+
+🎯 OBJECTIF DE PRÉCISION: 2 mm
+
+📊 STATISTIQUES GÉNÉRALES:
+   Points: 90
+   Observations: 176
+   Colonnes AR: AR 1, AR 2
+   Colonnes AV: AV 1, AV 2
+
+📐 DÉNIVELÉES CALCULÉES:
+   Valides: 176
+   Invalides: 0
+
+📏 ALTITUDES:
+   Référence: 518.519 m
+   Finale: 504.137 m
+   Dénivelée totale: -14.382 m
+
+
+=== ANALYSE DE FERMETURE ===
+🎯 Type de cheminement: ouvert
+📏 Distance totale: 3.792 km
+
+📊 Erreur de fermeture:
+   Valeur: 1265.00 mm
+   Tolérance: ±7.79 mm
+   Ratio: 162.39
+
+✅ Statut: DÉPASSEMENT
+🎯 Objectif 2mm: DÉPASSÉ
+
+
+🔧 CONTRÔLE QUALITÉ:
+   Statut: WARNING
+   Résidu max: 19.63 mm
+   Points > 5mm: 46
+
+✅ VALIDATION FINALE:
+   Fermeture: ❌ PROBLÈME
+   Précision 2mm: ❌ DÉPASSÉE
+
+Rapport généré le: 2025-08-14 04:13:18.781214
+============================================================

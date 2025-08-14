@@ -1,0 +1,375 @@
+================================================================================
+    SYSTÈME DE COMPENSATION ALTIMÉTRIQUE - VERSION C#
+    Précision cible: 2 mm
+    Pipeline complet: Import → Calcul → Compensation → Export
+================================================================================
+
+🔄 Mode batch - Pipeline automatique
+📁 Fichier : canalG1.csv
+📊 ÉTAPE 1 : IMPORT DES DONNÉES
+--------------------------------------------------
+📊 Import de canalG1.csv
+✅ 90 points de nivellement importés
+📍 Point de référence : AM2 (altitude = 518.519000 m)
+
+🔍 ÉTAPE 2 : VALIDATION ET ANALYSE PRÉLIMINAIRE
+--------------------------------------------------
+⚠️ 1: ΔH = -1.018435 m
+   ⚠️  Écart entre sessions: 3.7 mm
+⚠️ 2: ΔH = -0.649695 m
+   ⚠️  Écart entre sessions: 10.3 mm
+✅ 3: ΔH = -0.160575 m
+✅ 4: ΔH = 0.064050 m
+⚠️ 5: ΔH = 0.049535 m
+   ⚠️  Écart entre sessions: 3.4 mm
+⚠️ 6: ΔH = -0.054735 m
+   ⚠️  Écart entre sessions: 17.2 mm
+⚠️ 7: ΔH = 0.004445 m
+   ⚠️  Écart entre sessions: 11.6 mm
+✅ 8: ΔH = 0.045030 m
+⚠️ 9: ΔH = 0.005565 m
+   ⚠️  Écart entre sessions: 3.0 mm
+✅ 10: ΔH = 0.015045 m
+✅ 11: ΔH = -1.561970 m
+⚠️ 12: ΔH = -1.254830 m
+   ⚠️  Écart entre sessions: 22.1 mm
+⚠️ 13: ΔH = -1.385040 m
+   ⚠️  Écart entre sessions: 27.3 mm
+⚠️ 14: ΔH = -1.005840 m
+   ⚠️  Écart entre sessions: 12.2 mm
+⚠️ 15: ΔH = -0.003235 m
+   ⚠️  Écart entre sessions: 3.7 mm
+⚠️ 16: ΔH = 1.075545 m
+   ⚠️  Écart entre sessions: 16.0 mm
+⚠️ 17: ΔH = 1.461935 m
+   ⚠️  Écart entre sessions: 7.0 mm
+⚠️ 18: ΔH = 1.450910 m
+   ⚠️  Écart entre sessions: 34.3 mm
+⚠️ 19: ΔH = 1.093100 m
+   ⚠️  Écart entre sessions: 36.7 mm
+⚠️ 20: ΔH = 0.125765 m
+   ⚠️  Écart entre sessions: 12.0 mm
+⚠️ 21: ΔH = -0.036555 m
+   ⚠️  Écart entre sessions: 10.4 mm
+✅ 22: ΔH = 0.029865 m
+⚠️ 23: ΔH = -0.126620 m
+   ⚠️  Écart entre sessions: 4.1 mm
+✅ 24: ΔH = 0.115670 m
+✅ 25: ΔH = -0.013415 m
+⚠️ 26: ΔH = -0.022355 m
+   ⚠️  Écart entre sessions: 4.0 mm
+⚠️ 27: ΔH = 0.009870 m
+   ⚠️  Écart entre sessions: 3.4 mm
+⚠️ 28: ΔH = -0.017920 m
+   ⚠️  Écart entre sessions: 8.1 mm
+⚠️ 29: ΔH = 0.022845 m
+   ⚠️  Écart entre sessions: 6.2 mm
+⚠️ 30: ΔH = -0.562870 m
+   ⚠️  Écart entre sessions: 9.1 mm
+✅ 31: ΔH = -0.006505 m
+✅ 32: ΔH = 0.413065 m
+✅ 33: ΔH = 0.123490 m
+✅ 34: ΔH = -0.018965 m
+✅ 35: ΔH = 0.049315 m
+⚠️ 36: ΔH = 0.028445 m
+   ⚠️  Écart entre sessions: 6.5 mm
+✅ 37: ΔH = -0.005405 m
+⚠️ 38: ΔH = 0.004250 m
+   ⚠️  Écart entre sessions: 4.0 mm
+⚠️ 39: ΔH = 0.021075 m
+   ⚠️  Écart entre sessions: 4.3 mm
+⚠️ 40: ΔH = -0.023490 m
+   ⚠️  Écart entre sessions: 3.2 mm
+⚠️ 41: ΔH = -0.222095 m
+   ⚠️  Écart entre sessions: 33.9 mm
+⚠️ 42: ΔH = -0.015295 m
+   ⚠️  Écart entre sessions: 22.2 mm
+⚠️ 43: ΔH = 0.243245 m
+   ⚠️  Écart entre sessions: 7.4 mm
+✅ 44: ΔH = -0.026990 m
+✅ 45: ΔH = -0.017870 m
+⚠️ 46: ΔH = 0.008060 m
+   ⚠️  Écart entre sessions: 4.0 mm
+⚠️ 47: ΔH = -0.002050 m
+   ⚠️  Écart entre sessions: 5.7 mm
+⚠️ 48: ΔH = 0.021940 m
+   ⚠️  Écart entre sessions: 4.4 mm
+✅ 49: ΔH = -0.022625 m
+⚠️ 50: ΔH = -0.003220 m
+   ⚠️  Écart entre sessions: 5.9 mm
+⚠️ 51: ΔH = 0.013055 m
+   ⚠️  Écart entre sessions: 7.5 mm
+⚠️ 52: ΔH = -0.012445 m
+   ⚠️  Écart entre sessions: 3.3 mm
+✅ 53: ΔH = 0.002830 m
+✅ 54: ΔH = 0.019335 m
+✅ 55: ΔH = 0.018305 m
+⚠️ 56: ΔH = -0.005305 m
+   ⚠️  Écart entre sessions: 3.0 mm
+⚠️ 57: ΔH = 0.038750 m
+   ⚠️  Écart entre sessions: 4.3 mm
+⚠️ 58: ΔH = 0.009115 m
+   ⚠️  Écart entre sessions: 3.5 mm
+⚠️ 59: ΔH = 0.013700 m
+   ⚠️  Écart entre sessions: 39.3 mm
+⚠️ 60: ΔH = 0.008325 m
+   ⚠️  Écart entre sessions: 33.3 mm
+⚠️ 61: ΔH = -0.009885 m
+   ⚠️  Écart entre sessions: 7.0 mm
+⚠️ 62: ΔH = -0.044500 m
+   ⚠️  Écart entre sessions: 3.1 mm
+⚠️ 63: ΔH = 0.013155 m
+   ⚠️  Écart entre sessions: 4.8 mm
+⚠️ 64: ΔH = -0.566555 m
+   ⚠️  Écart entre sessions: 12.9 mm
+⚠️ 65: ΔH = -1.753125 m
+   ⚠️  Écart entre sessions: 9.9 mm
+✅ 66: ΔH = -1.271870 m
+⚠️ 67: ΔH = -1.339405 m
+   ⚠️  Écart entre sessions: 11.7 mm
+⚠️ 68: ΔH = 0.068350 m
+   ⚠️  Écart entre sessions: 12.0 mm
+⚠️ 69: ΔH = -0.026670 m
+   ⚠️  Écart entre sessions: 16.8 mm
+⚠️ 70: ΔH = -0.084330 m
+   ⚠️  Écart entre sessions: 23.0 mm
+⚠️ 71: ΔH = 1.406565 m
+   ⚠️  Écart entre sessions: 4.1 mm
+⚠️ 72: ΔH = 1.418875 m
+   ⚠️  Écart entre sessions: 4.3 mm
+⚠️ 73: ΔH = 1.410955 m
+   ⚠️  Écart entre sessions: 13.8 mm
+⚠️ 76: ΔH = -0.008250 m
+   ⚠️  Écart entre sessions: 3.0 mm
+✅ 77: ΔH = -0.034050 m
+⚠️ 78: ΔH = 0.041980 m
+   ⚠️  Écart entre sessions: 3.6 mm
+✅ 79: ΔH = -0.007875 m
+⚠️ 80: ΔH = 0.017475 m
+   ⚠️  Écart entre sessions: 9.4 mm
+✅ 83: ΔH = -1.390650 m
+✅ 84: ΔH = -1.219895 m
+✅ 85: ΔH = -1.140725 m
+⚠️ 86: ΔH = -1.306000 m
+   ⚠️  Écart entre sessions: 7.3 mm
+⚠️ 87: ΔH = -1.214450 m
+   ⚠️  Écart entre sessions: 8.5 mm
+⚠️ 88: ΔH = -1.216695 m
+   ⚠️  Écart entre sessions: 39.1 mm
+⚠️ 89: ΔH = -1.144080 m
+   ⚠️  Écart entre sessions: 36.6 mm
+⚠️ 90: ΔH = -1.238710 m
+   ⚠️  Écart entre sessions: 5.3 mm
+⚠️ 91: ΔH = -1.214360 m
+   ⚠️  Écart entre sessions: 6.8 mm
+✅ 92: ΔH = -0.905290 m
+
+📈 STATISTIQUES PRÉLIMINAIRES:
+   Points cohérents: 27/88 (30.7%)
+   Fermeture brute: -14410.9 mm
+   Qualité données: À améliorer
+
+⚙️  ÉTAPE 3 : COMPENSATION PAR MOINDRES CARRÉS
+--------------------------------------------------
+🔧 Début de la compensation par moindres carrés...
+📊 88 dénivelations valides, 89 points total
+📐 Système: A(89×89), L(89×1), P(89×89)
+✅ Système résolu avec succès
+📈 Compensation terminée: σ₀ = 0.0 mm
+✅ Compensation réussie !
+
+📊 RÉSULTATS DE LA COMPENSATION:
+   σ₀ (écart-type unitaire): 0.0 mm
+   Correction maximale: 0.0 mm
+   RMS des résidus: 0.0 mm
+   Qualité: 🌟 Excellente qualité - Compensation très précise
+   Précision atteinte: ✅ OUI
+
+📏 ÉTAPE 4 : ALTITUDES COMPENSÉES
+--------------------------------------------------
+Point        | Altitude compensée | Correction
+-------------|--------------------|-----------
+AM2          | 518.519000 m       | +0.0 mm (REF)
+1            | 517.500565 m       | +0.0 mm
+2            | 516.850870 m       | +0.0 mm
+3            | 516.690295 m       | +0.0 mm
+4            | 516.754345 m       | +0.0 mm
+5            | 516.803880 m       | +0.0 mm
+6            | 516.749145 m       | +0.0 mm
+7            | 516.753590 m       | +0.0 mm
+8            | 516.798620 m       | +0.0 mm
+9            | 516.804185 m       | +0.0 mm
+10           | 516.819230 m       | +0.0 mm
+11           | 515.257260 m       | +0.0 mm
+12           | 514.002430 m       | +0.0 mm
+13           | 512.617390 m       | +0.0 mm
+14           | 511.611550 m       | +0.0 mm
+15           | 511.608315 m       | +0.0 mm
+16           | 512.683860 m       | +0.0 mm
+17           | 514.145795 m       | +0.0 mm
+18           | 515.596705 m       | +0.0 mm
+19           | 516.689805 m       | +0.0 mm
+20           | 516.815570 m       | +0.0 mm
+21           | 516.779015 m       | +0.0 mm
+22           | 516.808880 m       | +0.0 mm
+23           | 516.682260 m       | +0.0 mm
+24           | 516.797930 m       | +0.0 mm
+25           | 516.784515 m       | +0.0 mm
+26           | 516.762160 m       | +0.0 mm
+27           | 516.772030 m       | +0.0 mm
+28           | 516.754110 m       | +0.0 mm
+29           | 516.776955 m       | +0.0 mm
+30           | 516.214085 m       | +0.0 mm
+31           | 516.207580 m       | +0.0 mm
+32           | 516.620645 m       | +0.0 mm
+33           | 516.744135 m       | +0.0 mm
+34           | 516.725170 m       | +0.0 mm
+35           | 516.774485 m       | +0.0 mm
+36           | 516.802930 m       | +0.0 mm
+37           | 516.797525 m       | +0.0 mm
+38           | 516.801775 m       | +0.0 mm
+39           | 516.822850 m       | +0.0 mm
+40           | 516.799360 m       | +0.0 mm
+41           | 516.577265 m       | +0.0 mm
+42           | 516.561970 m       | +0.0 mm
+43           | 516.805215 m       | +0.0 mm
+44           | 516.778225 m       | +0.0 mm
+45           | 516.760355 m       | +0.0 mm
+46           | 516.768415 m       | +0.0 mm
+47           | 516.766365 m       | +0.0 mm
+48           | 516.788305 m       | +0.0 mm
+49           | 516.765680 m       | +0.0 mm
+50           | 516.762460 m       | +0.0 mm
+51           | 516.775515 m       | +0.0 mm
+52           | 516.763070 m       | +0.0 mm
+53           | 516.765900 m       | +0.0 mm
+54           | 516.785235 m       | +0.0 mm
+55           | 516.803540 m       | +0.0 mm
+56           | 516.798235 m       | +0.0 mm
+57           | 516.836985 m       | +0.0 mm
+58           | 516.846100 m       | +0.0 mm
+59           | 516.859800 m       | +0.0 mm
+60           | 516.868125 m       | +0.0 mm
+61           | 516.858240 m       | +0.0 mm
+62           | 516.813740 m       | +0.0 mm
+63           | 516.826895 m       | +0.0 mm
+64           | 516.260340 m       | +0.0 mm
+65           | 514.507215 m       | +0.0 mm
+66           | 513.235345 m       | +0.0 mm
+67           | 511.895940 m       | +0.0 mm
+68           | 511.964290 m       | +0.0 mm
+69           | 511.937620 m       | +0.0 mm
+70           | 511.853290 m       | +0.0 mm
+71           | 513.259855 m       | +0.0 mm
+72           | 514.678730 m       | +0.0 mm
+73           | 516.089685 m       | +0.0 mm
+76           | 516.081435 m       | +0.0 mm
+77           | 516.047385 m       | +0.0 mm
+78           | 516.089365 m       | +0.0 mm
+79           | 516.081490 m       | +0.0 mm
+80           | 516.098965 m       | +0.0 mm
+83           | 514.708315 m       | +0.0 mm
+84           | 513.488420 m       | +0.0 mm
+85           | 512.347695 m       | +0.0 mm
+86           | 511.041695 m       | +0.0 mm
+87           | 509.827245 m       | +0.0 mm
+88           | 508.610550 m       | +0.0 mm
+89           | 507.466470 m       | +0.0 mm
+90           | 506.227760 m       | +0.0 mm
+91           | 505.013400 m       | +0.0 mm
+92           | 504.108110 m       | +0.0 mm
+
+📋 ÉTAPE 5 : GÉNÉRATION DES RAPPORTS
+--------------------------------------------------
+✅ Rapport de calculs généré: rapport_calculs.txt
+✅ Rapport de compensation généré: rapport_compensation.txt
+✅ Résultats exportés vers: resultats_compensation.csv
+📊 Format: CSV avec 89 points + statistiques
+
+📄 RAPPORT DE CALCULS:
+============================================================
+    RAPPORT DE CALCULS - NIVELLEMENT GÉOMÉTRIQUE
+============================================================
+
+🎯 OBJECTIF DE PRÉCISION: 2 mm
+
+📊 STATISTIQUES GÉNÉRALES:
+   Points: 90
+   Observations: 176
+   Colonnes AR: AR 1, AR 2
+   Colonnes AV: AV 1, AV 2
+
+📐 DÉNIVELÉES CALCULÉES:
+   Valides: 176
+   Invalides: 0
+
+📏 ALTITUDES:
+   Référence: 518.519 m
+   Finale: 504.137 m
+   Dénivelée totale: -14.382 m
+
+
+=== ANALYSE DE FERMETURE ===
+🎯 Type de cheminement: ouvert
+📏 Distance totale: 3.792 km
+
+📊 Erreur de fermeture:
+   Valeur: 1265.00 mm
+   Tolérance: ±7.79 mm
+   Ratio: 162.39
+
+✅ Statut: DÉPASSEMENT
+🎯 Objectif 2mm: DÉPASSÉ
+
+
+🔧 CONTRÔLE QUALITÉ:
+   Statut: WARNING
+   Résidu max: 19.63 mm
+   Points > 5mm: 46
+
+✅ VALIDATION FINALE:
+   Fermeture: ❌ PROBLÈME
+   Précision 2mm: ❌ DÉPASSÉE
+
+Rapport généré le: 2025-08-14 04:01:30.634561
+============================================================
+
+
+📄 RAPPORT DE COMPENSATION:
+======================================================================
+    RAPPORT DE COMPENSATION - MOINDRES CARRÉS
+======================================================================
+
+🎯 OBJECTIF PRÉCISION: 2 mm
+
+📊 SYSTÈME MATRICIEL:
+   Taille: 176x89
+   Méthode: decomposition_qr
+   Conditionnement: inf
+   Correction max: 7730.49 mm
+
+📈 STATISTIQUES QUALITÉ:
+   σ₀ (a posteriori): 0.2518
+   Degrés liberté: 87
+   Test χ² (poids): 5.52 / 109.77
+   Statut χ²: ✅ VALIDÉ
+
+🔍 DÉTECTION FAUTES:
+   Résidu normalisé max: 4.42
+   Seuil détection: 1.99
+   Observations suspectes: 12
+
+✅ ALTITUDES COMPENSÉES:
+   Référence: 518.5190 m
+   Finale: 504.1370 m
+   Points traités: 90
+
+⏱️ MÉTADONNÉES:
+   Timestamp: 2025-08-14 04:01:30.619619
+   Erreur instrumentale: 1.0 mm
+   Erreur kilométrique: 1.0 mm/km
+
+======================================================================
+
+
+✅ Traitement terminé avec succès.

@@ -1,0 +1,34 @@
+======================================================================
+    RAPPORT DE COMPENSATION - MOINDRES CARRÉS
+======================================================================
+
+🎯 OBJECTIF PRÉCISION: 2 mm
+
+📊 SYSTÈME MATRICIEL:
+   Taille: 176x89
+   Méthode: decomposition_qr
+   Conditionnement: inf
+   Correction max: 7730.49 mm
+
+📈 STATISTIQUES QUALITÉ:
+   σ₀ (a posteriori): 0.2518
+   Degrés liberté: 87
+   Test χ² (poids): 5.52 / 109.77
+   Statut χ²: ✅ VALIDÉ
+
+🔍 DÉTECTION FAUTES:
+   Résidu normalisé max: 4.42
+   Seuil détection: 1.99
+   Observations suspectes: 12
+
+✅ ALTITUDES COMPENSÉES:
+   Référence: 518.5190 m
+   Finale: 504.1370 m
+   Points traités: 90
+
+⏱️ MÉTADONNÉES:
+   Timestamp: 2025-08-14 04:13:18.771146
+   Erreur instrumentale: 1.0 mm
+   Erreur kilométrique: 1.0 mm/km
+
+======================================================================
