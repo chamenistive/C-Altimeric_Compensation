@@ -1,0 +1,13 @@
+Point,Altitude_Compensee_m,Correction_mm,Type,Precision_mm
+AM2,125.456000,0.0,Reference,0.0
+1,124.437565,0.0,Point,0.0
+2,123.787870,0.0,Point,0.0
+3,123.627295,0.0,Point,0.0
+
+# STATISTIQUES GLOBALES
+# Sigma0_mm,0.0
+# Correction_max_mm,0.0
+# RMS_residus_mm,0.0
+# Qualite, Excellente qualité - Compensation très précise
+# Methode,Moindres Carrés
+# Date_calcul,2025-08-14 01:14:55
