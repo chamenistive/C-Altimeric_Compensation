@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "CompensationAltimetrique.Core/1.0.0": {
+        "runtime": {
+          "CompensationAltimetrique.Core.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CompensationAltimetrique.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

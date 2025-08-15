@@ -1,3 +1,9 @@
+#!/bin/bash
+
+echo "🔧 Ajout des méthodes manquantes aux modèles..."
+
+# Compléter la classe CompensationResults
+cat > src/CompensationAltimetrique.Core/Models/LevelingData.cs << 'EOL'
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -61,3 +67,6 @@ namespace CompensationAltimetrique.Core.Models
         public int ProcessedPoints { get; set; } = 0;
     }
 }
+EOL
+
+echo "✅ Modèles mis à jour avec méthodes manquantes"

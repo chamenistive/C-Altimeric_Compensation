@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{39053040-8958-4638-914C-F909FAD17613}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompensationAltimetrique.Calculations", "src\CompensationAltimetrique.Calculations\CompensationAltimetrique.Calculations.csproj", "{1906AFFC-398C-454B-8738-369337D21D41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E6A1ECEC-034D-498A-AFAB-48EFACF04049}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompensationAltimetrique.Tests", "tests\CompensationAltimetrique.Tests\CompensationAltimetrique.Tests.csproj", "{CCF0AA50-8616-480F-BD2D-A67EEEDAD88B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompensationAltimetrique.Core", "src\CompensationAltimetrique.Core\CompensationAltimetrique.Core.csproj", "{6BAB06AE-D582-4F88-950F-608F292A57F6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1906AFFC-398C-454B-8738-369337D21D41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1906AFFC-398C-454B-8738-369337D21D41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1906AFFC-398C-454B-8738-369337D21D41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1906AFFC-398C-454B-8738-369337D21D41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCF0AA50-8616-480F-BD2D-A67EEEDAD88B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCF0AA50-8616-480F-BD2D-A67EEEDAD88B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCF0AA50-8616-480F-BD2D-A67EEEDAD88B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCF0AA50-8616-480F-BD2D-A67EEEDAD88B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BAB06AE-D582-4F88-950F-608F292A57F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BAB06AE-D582-4F88-950F-608F292A57F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BAB06AE-D582-4F88-950F-608F292A57F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BAB06AE-D582-4F88-950F-608F292A57F6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1906AFFC-398C-454B-8738-369337D21D41} = {39053040-8958-4638-914C-F909FAD17613}
+		{CCF0AA50-8616-480F-BD2D-A67EEEDAD88B} = {E6A1ECEC-034D-498A-AFAB-48EFACF04049}
+		{6BAB06AE-D582-4F88-950F-608F292A57F6} = {39053040-8958-4638-914C-F909FAD17613}
+	EndGlobalSection
+EndGlobal

@@ -174,7 +174,7 @@ namespace CompensationAltimetrique.Core.Services
             // Calcul correct: chaque point de nivellement contribue 2 observations (sessions 1 et 2)
             // Format de référence: 90 points × 2 sessions = 180 observations théoriques
             // Mais seules les dénivelées valides comptent: 88 dénivelées × 2 = 176 observations
-            var validDenivelations = data.Count(d => d.CalculateAverageDenivelation().HasValue);
+            var validDenivelations = data.Count(d => d.CalculateAverageDenivelation() != 0.0);
             return validDenivelations * 2; // 2 sessions par dénivelée
         }
         
@@ -188,10 +188,12 @@ namespace CompensationAltimetrique.Core.Services
         {
             return data.Where(d => !d.IsConsistent())
                       .Select(d => {
-                          var dh1 = d.CalculateDenivelation(1);
-                          var dh2 = d.CalculateDenivelation(2);
-                          if (dh1.HasValue && dh2.HasValue)
-                              return Math.Abs(dh1.Value - dh2.Value) * 1000;
+                          if (d.AR1.HasValue && d.AV1.HasValue && d.AR2.HasValue && d.AV2.HasValue)
+                          {
+                              var dh1 = d.AR1.Value - d.AV1.Value;
+                              var dh2 = d.AR2.Value - d.AV2.Value;
+                              return Math.Abs(dh1 - dh2) * 1000;
+                          }
                           return 0.0;
                       })
                       .DefaultIfEmpty(0.0)
@@ -201,11 +203,11 @@ namespace CompensationAltimetrique.Core.Services
         private int CountPointsOverThreshold(List<LevelingData> data, double thresholdMm)
         {
             return data.Count(d => {
-                var dh1 = d.CalculateDenivelation(1);
-                var dh2 = d.CalculateDenivelation(2);
-                if (dh1.HasValue && dh2.HasValue)
+                if (d.AR1.HasValue && d.AV1.HasValue && d.AR2.HasValue && d.AV2.HasValue)
                 {
-                    var diff = Math.Abs(dh1.Value - dh2.Value) * 1000;
+                    var dh1 = d.AR1.Value - d.AV1.Value;
+                    var dh2 = d.AR2.Value - d.AV2.Value;
+                    var diff = Math.Abs(dh1 - dh2) * 1000;
                     return diff > thresholdMm;
                 }
                 return false;
