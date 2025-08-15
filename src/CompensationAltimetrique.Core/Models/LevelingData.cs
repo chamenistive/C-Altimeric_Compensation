@@ -51,13 +51,4 @@ namespace CompensationAltimetrique.Core.Models
         }
     }
 
-    public class CompensationResults
-    {
-        public string Status { get; set; } = "Success";
-        public double Precision { get; set; }
-        public string Details { get; set; } = "";
-        public TimeSpan ComputationTime { get; set; } = TimeSpan.Zero;
-        public DateTime Timestamp { get; set; } = DateTime.Now;
-        public int ProcessedPoints { get; set; } = 0;
-    }
 }

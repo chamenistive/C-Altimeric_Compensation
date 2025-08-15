@@ -1,0 +1,217 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CompensationAltimetrique.Calculations</name>
+    </assembly>
+    <members>
+        <member name="T:CompensationAltimetrique.Calculations.Algorithms.LeastSquaresCompensator">
+            <summary>
+            Compensateur par moindres carrés pour données de nivellement
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.LeastSquaresCompensator.Compensate(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.Double)">
+            <summary>
+            Compensation d'un réseau de nivellement
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Algorithms.MatrixCalculator">
+            <summary>
+            Calculateur de matrices pour la compensation par moindres carrés
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.MatrixCalculator.Multiply(System.Double[0:,0:],System.Double[0:,0:])">
+            <summary>
+            Multiplication de matrices A × B
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.MatrixCalculator.Transpose(System.Double[0:,0:])">
+            <summary>
+            Transposée d'une matrice
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.MatrixCalculator.Invert(System.Double[0:,0:])">
+            <summary>
+            Inversion d'une matrice par élimination de Gauss-Jordan
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.MatrixCalculator.VectorNorm(System.Double[])">
+            <summary>
+            Calcul de la norme d'un vecteur
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.MatrixCalculator.PrintMatrix(System.Double[0:,0:],System.String)">
+            <summary>
+            Affichage d'une matrice (pour debug)
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions">
+            <summary>
+            Conditions atmosphériques pour calcul de réfraction.
+            Transposition exacte de la dataclass AtmosphericConditions Python.
+            
+            Formules appliquées:
+            - Correction courbure: C₁ = k × d² / (2R)  
+            - Correction réfraction: C₂ = -r × d² / (2R)
+            - Correction niveau apparent: n.a = (1-m.r.a) × Dh²/(2×Rn)
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions.CalculateRefractionCoefficient">
+            <summary>
+            Calcule le coefficient de réfraction selon conditions atmosphériques.
+            TRANSPOSITION EXACTE de la méthode Python.
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Corrections.RefractionCorrection">
+            <summary>
+            Résultat d'une correction de réfraction - Équivalent Python RefractionCorrection
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector">
+            <summary>
+            Calculateur de corrections atmosphériques - Transposition AtmosphericCorrector Python
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateLevelApparentCorrection(System.Double,System.Double,System.Double)">
+            <summary>
+            Calcul de la correction de niveau apparent - Nouvelle formule Python
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateAtmosphericCorrection(System.Double,System.Double,CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions)">
+            <summary>
+            Calcul complet des corrections atmosphériques - Méthode principale Python
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.ApplyCorrections(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions)">
+            <summary>
+            Application des corrections à des données de nivellement - Adaptation Python
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Corrections.AtmosphericConditionsFactory">
+            <summary>
+            Factory pour conditions atmosphériques - Équivalent create_standard_conditions Python
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.ValidationResult">
+            <summary>
+            Résultat de validation avec détails.
+            Transposition exacte de la dataclass ValidationResult Python.
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.CompensationStatistics">
+            <summary>
+            Statistiques de compensation selon la théorie géodésique.
+            Transposition exacte de CompensationStatistics Python.
+            </summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.Sigma0Hat">
+            <summary>Écart-type a posteriori σ₀</summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.DegreesOfFreedom">
+            <summary>Degrés de liberté (n_obs - n_unknowns)</summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.Chi2TestStatistic">
+            <summary>Statistique du test χ² (v^T P v)</summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.Chi2CriticalValue">
+            <summary>Valeur critique χ² au seuil de confiance</summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.UnitWeightValid">
+            <summary>Validation du poids unitaire (test χ²)</summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.MaxStandardizedResidual">
+            <summary>Résidu normalisé maximum</summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.BlunderDetectionThreshold">
+            <summary>Seuil de détection des fautes grossières (Student)</summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.CompensationStatistics.ConfidenceLevel">
+            <summary>Niveau de confiance utilisé</summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.QualityAnalyzer">
+            <summary>
+            Analyseur de qualité statistique selon la théorie des moindres carrés.
+            TRANSPOSITION EXACTE de QualityAnalyzer Python.
+            
+            Calcule les statistiques de qualité et détecte les fautes grossières
+            selon la théorie statistique des moindres carrés.
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.QualityAnalyzer.AnalyzeCompensation(MathNet.Numerics.LinearAlgebra.Matrix{System.Double},MathNet.Numerics.LinearAlgebra.Matrix{System.Double},MathNet.Numerics.LinearAlgebra.Vector{System.Double},MathNet.Numerics.LinearAlgebra.Vector{System.Double},MathNet.Numerics.LinearAlgebra.Matrix{System.Double})">
+            <summary>
+            Analyse statistique complète de la compensation.
+            TRANSPOSITION EXACTE de analyze_compensation Python.
+            
+            Calcule:
+            - Écart-type a posteriori σ₀
+            - Test du poids unitaire (χ²)
+            - Résidus normalisés
+            - Détection des fautes grossières
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.QualityAnalyzer.CalculateNormalizedResiduals(MathNet.Numerics.LinearAlgebra.Vector{System.Double},MathNet.Numerics.LinearAlgebra.Matrix{System.Double},MathNet.Numerics.LinearAlgebra.Matrix{System.Double},MathNet.Numerics.LinearAlgebra.Matrix{System.Double},System.Double)">
+            <summary>
+            Calcul des résidus normalisés.
+            TRANSPOSITION EXACTE de _calculate_normalized_residuals Python.
+            
+            Formule: r̂ᵢ = vᵢ / (σ₀ √qᵥᵥᵢ)
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.QualityAnalyzer.DetectBlunders(MathNet.Numerics.LinearAlgebra.Vector{System.Double},System.Int32)">
+            <summary>
+            Détection des fautes grossières selon le test de Student.
+            Équivalent de detect_blunders Python.
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.BlunderDetection">
+            <summary>
+            Détection de faute grossière.
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.PrecisionValidator">
+            <summary>
+            Validateur de précision 2mm.
+            TRANSPOSITION EXACTE de PrecisionValidator Python.
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.PrecisionValidator.ValidateClosureError(System.Double,System.Double,System.String)">
+            <summary>
+            Validation de l'erreur de fermeture.
+            TRANSPOSITION EXACTE de validate_closure_error Python.
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.PrecisionValidator.ValidateAdjustments(MathNet.Numerics.LinearAlgebra.Vector{System.Double})">
+            <summary>
+            Validation des ajustements de compensation.
+            TRANSPOSITION EXACTE de validate_adjustments Python.
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.PrecisionValidator.ValidateResiduals(MathNet.Numerics.LinearAlgebra.Vector{System.Double},CompensationAltimetrique.Calculations.Validation.CompensationStatistics)">
+            <summary>
+            Validation des résidus statistiques.
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.GeodeticValidator">
+            <summary>
+            Validateur géodésique pour contrôles de cohérence.
+            Équivalent de GeodeticValidator Python.
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticValidator.ValidateDistances(System.Collections.Generic.IEnumerable{System.Double})">
+            <summary>
+            Validation des distances de visée.
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.CompensationValidator">
+            <summary>
+            Validateur de compensation intégrant tous les contrôles.
+            Équivalent de CompensationValidator Python.
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.CompensationValidator.ValidateCompensation(MathNet.Numerics.LinearAlgebra.Vector{System.Double},MathNet.Numerics.LinearAlgebra.Vector{System.Double},CompensationAltimetrique.Calculations.Validation.CompensationStatistics,System.Double,System.Double,System.Collections.Generic.IEnumerable{System.Double})">
+            <summary>
+            Validation complète de la compensation.
+            Intègre tous les contrôles Python.
+            </summary>
+        </member>
+    </members>
+</doc>

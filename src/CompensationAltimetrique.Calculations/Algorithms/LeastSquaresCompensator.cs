@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathNet.Numerics.LinearAlgebra;
 using CompensationAltimetrique.Core.Models;
 
 namespace CompensationAltimetrique.Calculations.Algorithms
@@ -25,7 +26,7 @@ namespace CompensationAltimetrique.Calculations.Algorithms
             System.Console.WriteLine("🔧 Début de la compensation par moindres carrés...");
             
             // 1. Préparation des données
-            var validData = levelingData.Where(d => d.CalculateAverageDenivelation().HasValue).ToList();
+            var validData = levelingData.Where(d => d.CalculateAverageDenivelation() != 0).ToList();
             int n = validData.Count + 1; // +1 pour le point de référence
             
             System.Console.WriteLine($"📊 {validData.Count} dénivelations valides, {n} points total");
@@ -45,7 +46,7 @@ namespace CompensationAltimetrique.Calculations.Algorithms
             // Équations d'observation pour chaque dénivelation
             for (int i = 0; i < validData.Count; i++)
             {
-                var dh = validData[i].CalculateAverageDenivelation().Value;
+                var dh = validData[i].CalculateAverageDenivelation();
                 observations.Add(dh);
                 
                 var row = new double[n];
@@ -107,8 +108,8 @@ namespace CompensationAltimetrique.Calculations.Algorithms
                 var results = new CompensationResults
                 {
                     Sigma0 = sigma0,
-                    Corrections = new double[n],
-                    Residuals = residuals,
+                    Corrections = Vector<double>.Build.DenseOfArray(new double[n]),
+                    Residuals = Vector<double>.Build.DenseOfArray(residuals),
                     RmsResiduals = Math.Sqrt(sumSquaredResiduals / m),
                     IsValid = sigma0 < 0.005 // 5mm
                 };
@@ -123,7 +124,7 @@ namespace CompensationAltimetrique.Calculations.Algorithms
                     results.Corrections[i + 1] = altitude - (X[0, 0] + GetCumulativeDH(validData, i));
                 }
                 
-                results.MaxCorrection = results.Corrections.Max(Math.Abs);
+                results.MaxCorrection = results.Corrections.AbsoluteMaximum();
                 
                 System.Console.WriteLine($"📈 Compensation terminée: σ₀ = {sigma0*1000:F1} mm");
                 
@@ -141,7 +142,7 @@ namespace CompensationAltimetrique.Calculations.Algorithms
             double cumul = 0;
             for (int i = 0; i <= index; i++)
             {
-                cumul += data[i].CalculateAverageDenivelation() ?? 0;
+                cumul += data[i].CalculateAverageDenivelation();
             }
             return cumul;
         }
