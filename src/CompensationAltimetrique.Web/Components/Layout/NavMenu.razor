@@ -1,6 +1,6 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">CompensationAltimetrique.Web</a>
+        <a class="navbar-brand" href="">Compensation Altimétrique</a>
     </div>
 </div>
 
@@ -9,20 +9,32 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            <NavLink class="nav-link" href="import" Match="NavLinkMatch.All">
+                <span class="bi bi-upload" aria-hidden="true"></span> Import Données
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="parameters">
+                <span class="bi bi-gear" aria-hidden="true"></span> Paramètres
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link" href="computation">
+                <span class="bi bi-calculator" aria-hidden="true"></span> Calculs
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="results">
+                <span class="bi bi-table" aria-hidden="true"></span> Résultats
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="export">
+                <span class="bi bi-download" aria-hidden="true"></span> Export
             </NavLink>
         </div>
     </nav>

@@ -157,9 +157,9 @@
                     @* Actions *@
                     <div class="d-flex justify-content-between mt-4">
                         <button class="btn btn-outline-secondary" 
-                                onclick="@ResetData" 
+                                @onclick="ResetData" 
                                 disabled="@CompensationSvc.IsComputing">
-                            <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+                            <i class="bi bi-arrow-clockwise"></i> Charger Données de Test
                         </button>
                         
                         @if (CompensationSvc.HasData && !CompensationSvc.HasValidationIssues)
@@ -181,10 +181,18 @@
     private bool isDragOver = false;
     private List<LevelingDataDisplayModel> displayData = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         CompensationSvc.PropertyChanged += OnServicePropertyChanged;
         RefreshDisplayData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !CompensationSvc.HasData)
+        {
+            await LoadTestDataSilent();
+        }
     }
 
     private async Task HandleFileSelection(InputFileChangeEventArgs e)
@@ -266,12 +274,52 @@
             .ToList();
     }
 
-    private void ResetData()
+    private async Task ResetData()
     {
         CompensationSvc.Reset();
         selectedFile = null;
         displayData.Clear();
+        
+        // Charger automatiquement les données de test
+        await LoadTestData();
+        
         StateHasChanged();
+    }
+    
+    private async Task LoadTestData()
+    {
+        try
+        {
+            var importer = new ExcelLevelingImporter();
+            var testData = importer.ImportFromFile("test");
+            
+            await CompensationSvc.LoadData(testData);
+            RefreshDisplayData();
+            
+            await ShowNotification("Données de test chargées avec succès !", NotificationModel.NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification($"Erreur lors du chargement des données de test: {ex.Message}", NotificationModel.NotificationType.Error);
+        }
+    }
+
+    private async Task LoadTestDataSilent()
+    {
+        try
+        {
+            var importer = new ExcelLevelingImporter();
+            var testData = importer.ImportFromFile("test");
+            
+            await CompensationSvc.LoadData(testData);
+            RefreshDisplayData();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // Chargement silencieux - pas de notification JavaScript
+            Console.WriteLine($"Erreur lors du chargement des données de test: {ex.Message}");
+        }
     }
 
     private bool IsValidExcelFile(IBrowserFile file)
