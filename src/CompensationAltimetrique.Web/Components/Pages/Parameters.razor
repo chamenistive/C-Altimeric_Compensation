@@ -1,0 +1,357 @@
+@page "/parameters"
+@using CompensationAltimetrique.Web.Services
+@using CompensationAltimetrique.Web.Models
+@rendermode InteractiveServer
+@inject CompensationService CompensationSvc
+@inject NavigationManager Navigation
+
+<PageTitle>Paramètres - Compensation Altimétrique</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-gear"></i> 2. Configuration des Paramètres
+                    </h4>
+                </div>
+                <div class="card-body">
+
+                    @if (!CompensationSvc.HasData)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Aucune donnée importée. Veuillez d'abord <a href="/import">importer des données</a>.
+                        </div>
+                        return;
+                    }
+
+                    <EditForm Model="parameters" OnValidSubmit="SaveConfiguration">
+                        <DataAnnotationsValidator />
+                        
+                        @* Section Points de Référence *@
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="bi bi-geo-alt"></i> Points de Référence</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Point de référence</label>
+                                            <select class="form-select" @bind="parameters.ReferencePoint">
+                                                <option value="">-- Sélectionner un point --</option>
+                                                @foreach (var point in availablePoints)
+                                                {
+                                                    <option value="@point">@point</option>
+                                                }
+                                            </select>
+                                            <div class="form-text">Point avec altitude connue (point fixe)</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Altitude de référence (m)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" 
+                                                       @bind="parameters.ReferenceAltitude" 
+                                                       step="0.001" 
+                                                       placeholder="Ex: 125.456" />
+                                                <span class="input-group-text">m</span>
+                                            </div>
+                                            <ValidationMessage For="() => parameters.ReferenceAltitude" />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Type de réseau</label>
+                                            <select class="form-select" @bind="parameters.NetworkType">
+                                                <option value="fermé">Traverse fermée</option>
+                                                <option value="ouvert">Traverse ouverte</option>
+                                                <option value="maillé">Réseau maillé</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="bi bi-bullseye"></i> Paramètres de Précision</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-center p-3 bg-light rounded mb-3">
+                                            <div class="h5 text-primary mb-1">@parameters.TargetPrecisionMm mm</div>
+                                            <div class="text-muted">Précision cible</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Précision cible</label>
+                                            <div class="input-group">
+                                                <input type="range" class="form-range" 
+                                                       @bind="parameters.TargetPrecisionMm" 
+                                                       min="0.5" max="10" step="0.5" />
+                                                <input type="number" class="form-control" style="max-width: 100px;"
+                                                       @bind="parameters.TargetPrecisionMm" 
+                                                       step="0.1" min="0.1" max="50" />
+                                                <span class="input-group-text">mm</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Niveau de confiance</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" 
+                                                       @bind="parameters.ConfidenceLevel" 
+                                                       step="0.01" min="0.90" max="0.99" />
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <div class="form-text">Généralement 0.95 (95%)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Section Paramètres Géodésiques *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-calculator"></i> Paramètres Géodésiques
+                                            <small class="text-muted ms-2">Théorie σ² = a² + b²×d</small>
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Erreur instrumentale (a)</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" 
+                                                               @bind="parameters.InstrumentalErrorMm" 
+                                                               step="0.1" min="0.1" max="10" />
+                                                        <span class="input-group-text">mm</span>
+                                                    </div>
+                                                    <div class="form-text">Erreur fixe de l'instrument</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Erreur kilométrique (b)</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" 
+                                                               @bind="parameters.KilometricErrorMm" 
+                                                               step="0.1" min="0.1" max="10" />
+                                                        <span class="input-group-text">mm/km</span>
+                                                    </div>
+                                                    <div class="form-text">Erreur proportionnelle à la distance</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Section Corrections Atmosphériques *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   @bind="parameters.ApplyAtmosphericCorrections" 
+                                                   id="atmosphericSwitch">
+                                            <label class="form-check-label" for="atmosphericSwitch">
+                                                <h6 class="mb-0"><i class="bi bi-cloud"></i> Corrections Atmosphériques</h6>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    @if (parameters.ApplyAtmosphericCorrections)
+                                    {
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Température</label>
+                                                        <div class="input-group">
+                                                            <input type="number" class="form-control" 
+                                                                   @bind="parameters.TemperatureCelsius" 
+                                                                   step="0.1" />
+                                                            <span class="input-group-text">°C</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Pression</label>
+                                                        <div class="input-group">
+                                                            <input type="number" class="form-control" 
+                                                                   @bind="parameters.PressureHPa" 
+                                                                   step="0.1" />
+                                                            <span class="input-group-text">hPa</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Humidité</label>
+                                                        <div class="input-group">
+                                                            <input type="number" class="form-control" 
+                                                                   @bind="parameters.HumidityPercent" 
+                                                                   step="1" min="0" max="100" />
+                                                            <span class="input-group-text">%</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Résumé de Configuration *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="bi bi-clipboard-check"></i> Résumé de la Configuration</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <ul class="list-unstyled">
+                                                    <li><strong>Points à traiter :</strong> @CompensationSvc.DataCount</li>
+                                                    <li><strong>Point de référence :</strong> @(string.IsNullOrEmpty(parameters.ReferencePoint) ? "Non défini" : parameters.ReferencePoint)</li>
+                                                    <li><strong>Altitude référence :</strong> @parameters.ReferenceAltitude.ToString("F3") m</li>
+                                                    <li><strong>Type de réseau :</strong> @parameters.NetworkType</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <ul class="list-unstyled">
+                                                    <li><strong>Précision cible :</strong> @parameters.TargetPrecisionMm mm</li>
+                                                    <li><strong>Paramètres géodésiques :</strong> a=@parameters.InstrumentalErrorMm mm, b=@parameters.KilometricErrorMm mm/km</li>
+                                                    <li><strong>Corrections atmosphériques :</strong> @(parameters.ApplyAtmosphericCorrections ? "Activées" : "Désactivées")</li>
+                                                    <li><strong>Niveau de confiance :</strong> @((parameters.ConfidenceLevel * 100).ToString("F0"))%</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Actions *@
+                        <div class="d-flex justify-content-between">
+                            <a href="/import" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Retour aux Données
+                            </a>
+                            
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" @onclick="ResetToDefaults">
+                                    <i class="bi bi-arrow-clockwise"></i> Valeurs par défaut
+                                </button>
+                                <button type="submit" class="btn btn-success btn-lg" disabled="@(!IsConfigurationValid())">
+                                    <i class="bi bi-arrow-right"></i> Lancer les Calculs
+                                </button>
+                            </div>
+                        </div>
+
+                    </EditForm>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CompensationParametersModel parameters = new();
+    private List<string> availablePoints = new();
+
+    protected override void OnInitialized()
+    {
+        RefreshAvailablePoints();
+        LoadDefaultParameters();
+    }
+
+    private void RefreshAvailablePoints()
+    {
+        if (CompensationSvc.HasData)
+        {
+            availablePoints = CompensationSvc.LevelingData
+                .Select(d => d.Matricule)
+                .Distinct()
+                .OrderBy(p => p)
+                .ToList();
+                
+            // Ajouter quelques points de référence typiques
+            var commonRefPoints = new[] { "REF", "BASE", "RN", "BM1", "ORIGIN" };
+            foreach (var refPoint in commonRefPoints)
+            {
+                if (!availablePoints.Contains(refPoint))
+                {
+                    availablePoints.Insert(0, refPoint);
+                }
+            }
+        }
+    }
+
+    private void LoadDefaultParameters()
+    {
+        parameters = new CompensationParametersModel
+        {
+            ReferencePoint = availablePoints.FirstOrDefault() ?? "REF",
+            ReferenceAltitude = 100.000,
+            TargetPrecisionMm = 2.0,
+            InstrumentalErrorMm = 1.0,
+            KilometricErrorMm = 1.5,
+            ConfidenceLevel = 0.95,
+            ApplyAtmosphericCorrections = false,
+            NetworkType = "fermé",
+            TemperatureCelsius = 20.0,
+            PressureHPa = 1013.25,
+            HumidityPercent = 60.0
+        };
+    }
+
+    private void ResetToDefaults()
+    {
+        LoadDefaultParameters();
+        StateHasChanged();
+    }
+
+    private bool IsConfigurationValid()
+    {
+        return !string.IsNullOrEmpty(parameters.ReferencePoint) &&
+               parameters.ReferenceAltitude != 0 &&
+               parameters.TargetPrecisionMm > 0 &&
+               parameters.InstrumentalErrorMm > 0 &&
+               parameters.KilometricErrorMm > 0 &&
+               parameters.ConfidenceLevel > 0.8 && parameters.ConfidenceLevel < 1.0;
+    }
+
+    private async Task SaveConfiguration()
+    {
+        try
+        {
+            // Configuration du service de compensation
+            CompensationSvc.ConfigureCompensation(
+                parameters.ReferencePoint,
+                parameters.ReferenceAltitude,
+                parameters.TargetPrecisionMm
+            );
+
+            // Navigation vers la page de calculs
+            Navigation.NavigateTo("/computation");
+        }
+        catch (Exception ex)
+        {
+            // Gestion d'erreur (à implémenter avec des notifications)
+            Console.WriteLine($"Erreur de configuration : {ex.Message}");
+        }
+    }
+}

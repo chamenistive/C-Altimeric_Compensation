@@ -1,0 +1,334 @@
+@page "/computation"
+@using CompensationAltimetrique.Web.Services
+@using CompensationAltimetrique.Web.Models
+@using CompensationAltimetrique.Core.Models
+@using static CompensationAltimetrique.Web.Services.CompensationService
+@rendermode InteractiveServer
+@inject CompensationService CompensationSvc
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Calculs - Compensation Altimétrique</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-calculator"></i> 3. Calculs de Compensation
+                    </h4>
+                </div>
+                <div class="card-body">
+
+                    @if (!CompensationSvc.CanStartCompensation)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Configuration incomplète. Veuillez d'abord <a href="/parameters">configurer les paramètres</a>.
+                        </div>
+                        return;
+                    }
+
+                    @* Section de lancement *@
+                    @if (CompensationSvc.CurrentState != CompensationState.Computing && 
+                         CompensationSvc.CurrentState != CompensationState.Completed)
+                    {
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-play-circle display-1 text-success"></i>
+                            </div>
+                            <h3 class="mb-3">Prêt pour les calculs</h3>
+                            <p class="text-muted mb-4">
+                                @CompensationSvc.DataCount points à traiter | 
+                                Précision cible : @CompensationSvc.Configuration.TargetPrecisionMm mm
+                            </p>
+                            <button class="btn btn-success btn-lg px-5 py-3" @onclick="StartCompensation">
+                                <i class="bi bi-rocket-takeoff me-2"></i> LANCER LES CALCULS
+                            </button>
+                        </div>
+                    }
+
+                    @* Progression des calculs *@
+                    @if (CompensationSvc.IsComputing)
+                    {
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                            </div>
+                            <h5 class="mb-3">Calculs en cours...</h5>
+                            
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="progress mb-3" style="height: 20px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             style="width: @CompensationSvc.ProgressPercentage%">
+                                            @CompensationSvc.ProgressPercentage%
+                                        </div>
+                                    </div>
+                                    <p class="text-muted">@CompensationSvc.StatusMessage</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Log des étapes en temps réel *@
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-list-ul"></i> Étapes de calcul</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="@GetStepClass(10)">
+                                        <i class="@GetStepIcon(10) me-2"></i>
+                                        Initialisation des calculs
+                                    </div>
+                                    <div class="@GetStepClass(30)">
+                                        <i class="@GetStepIcon(30) me-2"></i>
+                                        Construction de la matrice de conception
+                                    </div>
+                                    <div class="@GetStepClass(50)">
+                                        <i class="@GetStepIcon(50) me-2"></i>
+                                        Calcul des poids géodésiques
+                                    </div>
+                                    <div class="@GetStepClass(70)">
+                                        <i class="@GetStepIcon(70) me-2"></i>
+                                        Résolution du système linéaire
+                                    </div>
+                                    <div class="@GetStepClass(90)">
+                                        <i class="@GetStepIcon(90) me-2"></i>
+                                        Validation des résultats
+                                    </div>
+                                    <div class="@GetStepClass(100)">
+                                        <i class="@GetStepIcon(100) me-2"></i>
+                                        Compensation terminée
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @* Résultats *@
+                    @if (CompensationSvc.HasResults && CompensationSvc.Results != null)
+                    {
+                        var stats = new CompensationStatisticsModel
+                        {
+                            TotalPoints = CompensationSvc.DataCount,
+                            ProcessedPoints = CompensationSvc.Results.ProcessedPoints,
+                            ClosureError = CompensationSvc.Results.ClosureError,
+                            RmsResiduals = CompensationSvc.Results.RmsResiduals,
+                            MaxCorrection = CompensationSvc.Results.MaxCorrection,
+                            TotalDistance = CompensationSvc.Results.TotalDistance,
+                            ComputationTime = CompensationSvc.Results.ComputationTime,
+                            IsValid = CompensationSvc.Results.IsValid,
+                            PrecisionAchieved = CompensationSvc.Results.PrecisionAchieved
+                        };
+
+                        <div class="alert alert-success text-center">
+                            <i class="bi bi-check-circle display-4 text-success"></i>
+                            <h4 class="mt-2">Calculs terminés avec succès !</h4>
+                            <p class="mb-0">Temps de calcul : @stats.FormattedComputationTime</p>
+                        </div>
+
+                        @* Statistiques globales *@
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Statistiques Générales</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <div class="text-center p-2 bg-light rounded">
+                                                    <div class="h5 text-primary mb-0">@stats.ProcessedPoints</div>
+                                                    <small class="text-muted">Points traités</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-center p-2 bg-light rounded">
+                                                    <div class="h5 text-info mb-0">@stats.FormattedTotalDistance</div>
+                                                    <small class="text-muted">Distance totale</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-center p-2 bg-light rounded">
+                                                    <div class="h5 text-warning mb-0">@stats.FormattedClosureError</div>
+                                                    <small class="text-muted">Erreur fermeture</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-center p-2 bg-light rounded">
+                                                    <div class="h5 text-success mb-0">@stats.FormattedMaxCorrection</div>
+                                                    <small class="text-muted">Correction max</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="bi bi-shield-check"></i> Validation</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex flex-column gap-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Statut général :</span>
+                                                <span class="badge bg-success">@stats.ValidationStatus</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Précision cible :</span>
+                                                <span class="badge @(stats.PrecisionAchieved ? "bg-success" : "bg-warning")">
+                                                    @stats.PrecisionStatus
+                                                </span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>RMS résidus :</span>
+                                                <span class="text-muted">@stats.FormattedRmsResiduals</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Temps calcul :</span>
+                                                <span class="text-muted">@stats.FormattedComputationTime</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Boutons de navigation *@
+                        <div class="text-center">
+                            <a href="/results" class="btn btn-primary btn-lg me-3">
+                                <i class="bi bi-table"></i> Voir les Résultats Détaillés
+                            </a>
+                            <button class="btn btn-outline-success" @onclick="ExportResults">
+                                <i class="bi bi-download"></i> Exporter
+                            </button>
+                        </div>
+                    }
+
+                    @* Gestion d'erreurs *@
+                    @if (CompensationSvc.CurrentState == CompensationState.Error)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Erreur lors des calculs :</strong>
+                            <p class="mb-0">@CompensationSvc.StatusMessage</p>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary" @onclick="RetryCalculation">
+                                <i class="bi bi-arrow-clockwise"></i> Réessayer
+                            </button>
+                            <a href="/parameters" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-gear"></i> Modifier les Paramètres
+                            </a>
+                        </div>
+                    }
+
+                    @* Actions *@
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="/parameters" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Retour Paramètres
+                        </a>
+                        
+                        @if (!CompensationSvc.IsComputing)
+                        {
+                            <button class="btn btn-outline-warning" @onclick="ResetCalculation">
+                                <i class="bi bi-arrow-clockwise"></i> Nouveau Calcul
+                            </button>
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        CompensationSvc.PropertyChanged += OnServicePropertyChanged;
+        CompensationSvc.CompensationCompleted += OnCompensationCompleted;
+    }
+
+    private async Task StartCompensation()
+    {
+        try
+        {
+            var success = await CompensationSvc.StartCompensationAsync();
+            if (!success)
+            {
+                await ShowNotification("Erreur lors du lancement des calculs", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification($"Erreur : {ex.Message}", "error");
+        }
+    }
+
+    private async Task RetryCalculation()
+    {
+        await StartCompensation();
+    }
+
+    private void ResetCalculation()
+    {
+        CompensationSvc.Reset();
+        Navigation.NavigateTo("/import");
+    }
+
+    private async Task ExportResults()
+    {
+        // Redirection vers la page d'export
+        Navigation.NavigateTo("/export");
+    }
+
+    private void OnServicePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnCompensationCompleted(object? sender, EventArgs e)
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+            ShowNotification("Calculs terminés avec succès !", "success");
+        });
+    }
+
+    private string GetStepClass(int stepProgress)
+    {
+        if (CompensationSvc.ProgressPercentage >= stepProgress)
+            return "text-success fw-bold";
+        else if (CompensationSvc.ProgressPercentage >= stepProgress - 10)
+            return "text-primary fw-bold";
+        else
+            return "text-muted";
+    }
+
+    private string GetStepIcon(int stepProgress)
+    {
+        if (CompensationSvc.ProgressPercentage >= stepProgress)
+            return "bi bi-check-circle-fill";
+        else if (CompensationSvc.ProgressPercentage >= stepProgress - 10)
+            return "bi bi-arrow-right-circle-fill";
+        else
+            return "bi bi-circle";
+    }
+
+    private async Task ShowNotification(string message, string type)
+    {
+        await JSRuntime.InvokeVoidAsync("showToast", message, type);
+    }
+
+    public void Dispose()
+    {
+        CompensationSvc.PropertyChanged -= OnServicePropertyChanged;
+        CompensationSvc.CompensationCompleted -= OnCompensationCompleted;
+    }
+}

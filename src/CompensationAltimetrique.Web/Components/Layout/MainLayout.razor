@@ -1,0 +1,141 @@
+@inherits LayoutComponentBase
+@using CompensationAltimetrique.Web.Services
+@using static CompensationAltimetrique.Web.Services.CompensationService
+@inject CompensationService CompensationSvc
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="bi bi-calculator-fill me-2"></i>
+                        Compensation Altimétrique
+                    </h4>
+                    <small class="text-muted">DickPy C# - Version 2.0</small>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-end">
+                        <div class="small">
+                            <i class="bi bi-database me-1"></i>
+                            @(CompensationSvc.HasData ? $"{CompensationSvc.DataCount} points" : "Aucune donnée")
+                        </div>
+                        <div class="small text-success">
+                            <i class="bi bi-clock me-1"></i>
+                            @DateTime.Now.ToString("HH:mm")
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="toggleTheme()">
+                        <i class="bi bi-moon-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation par onglets -->
+        <nav class="bg-light border-bottom px-4 py-2">
+            <div class="nav nav-tabs border-0">
+                <a class="nav-link @GetTabClass("/import")" href="/import">
+                    <i class="bi bi-upload me-2"></i>
+                    1. Import Données
+                </a>
+                <a class="nav-link @GetTabClass("/parameters") @GetTabDisabled(CompensationSvc.HasData)" href="/parameters">
+                    <i class="bi bi-gear me-2"></i>
+                    2. Paramètres
+                </a>
+                <a class="nav-link @GetTabClass("/computation") @GetTabDisabled(CompensationSvc.CanStartCompensation)" href="/computation">
+                    <i class="bi bi-calculator me-2"></i>
+                    3. Calculs
+                </a>
+                <a class="nav-link @GetTabClass("/results") @GetTabDisabled(CompensationSvc.HasResults)" href="/results">
+                    <i class="bi bi-table me-2"></i>
+                    4. Résultats
+                </a>
+                <a class="nav-link @GetTabClass("/export") @GetTabDisabled(CompensationSvc.HasResults)" href="/export">
+                    <i class="bi bi-download me-2"></i>
+                    5. Export
+                </a>
+            </div>
+        </nav>
+
+        <article class="content px-4">
+            @Body
+        </article>
+
+        <!-- Barre de statut -->
+        <footer class="bg-light border-top px-4 py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="@GetStatusClass()">
+                        <i class="@GetStatusIcon() me-1"></i>
+                        @CompensationSvc.StatusMessage
+                    </span>
+                    @if (CompensationSvc.IsComputing)
+                    {
+                        <div class="progress" style="width: 200px; height: 6px;">
+                            <div class="progress-bar progress-bar-animated" 
+                                 style="width: @CompensationSvc.ProgressPercentage%"></div>
+                        </div>
+                        <span class="small text-muted">@CompensationSvc.ProgressPercentage%</span>
+                    }
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Prêt | @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                </small>
+            </div>
+        </footer>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    Une erreur inattendue s'est produite.
+    <a href="" class="reload">Recharger</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string GetTabClass(string route)
+    {
+        var uri = new Uri(Navigation.Uri);
+        var currentPath = uri.AbsolutePath.TrimEnd('/');
+        if (string.IsNullOrEmpty(currentPath)) currentPath = "/import";
+        
+        return currentPath == route ? "active" : "";
+    }
+
+    private string GetTabDisabled(bool condition)
+    {
+        return condition ? "" : "disabled";
+    }
+
+    private string GetStatusClass()
+    {
+        return CompensationSvc.CurrentState switch
+        {
+            CompensationState.Error => "text-danger",
+            CompensationState.Computing => "text-primary",
+            CompensationState.Completed => "text-success",
+            _ => "text-muted"
+        };
+    }
+
+    private string GetStatusIcon()
+    {
+        return CompensationSvc.CurrentState switch
+        {
+            CompensationState.Error => "bi bi-exclamation-triangle",
+            CompensationState.Computing => "bi bi-arrow-repeat",
+            CompensationState.Completed => "bi bi-check-circle",
+            CompensationState.LoadingData => "bi bi-upload",
+            CompensationState.ValidatingData => "bi bi-shield-check",
+            _ => "bi bi-circle"
+        };
+    }
+}

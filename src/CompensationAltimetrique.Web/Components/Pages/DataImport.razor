@@ -1,0 +1,308 @@
+@page "/import"
+@using CompensationAltimetrique.Web.Services
+@using CompensationAltimetrique.Web.Models
+@using CompensationAltimetrique.Core.Models
+@rendermode InteractiveServer
+@inject CompensationService CompensationSvc
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Import de Données - Compensation Altimétrique</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-upload"></i> 1. Import des Données de Nivellement
+                    </h4>
+                </div>
+                <div class="card-body">
+
+                    @* Section d'upload de fichier *@
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="border rounded p-4 text-center @(isDragOver ? "border-primary bg-light" : "border-secondary")">
+                                <i class="bi bi-cloud-upload display-4 text-muted mb-3"></i>
+                                <h5>Sélectionner un fichier Excel</h5>
+                                <p class="text-muted">Glissez-déposez votre fichier Excel ici ou cliquez pour parcourir</p>
+                                
+                                <InputFile OnChange="HandleFileSelection" 
+                                          accept=".xlsx,.xls" 
+                                          class="form-control mb-3" 
+                                          disabled="@CompensationSvc.IsComputing" />
+                                
+                                <button class="btn btn-primary btn-lg" 
+                                        onclick="document.querySelector('input[type=file]').click()"
+                                        disabled="@CompensationSvc.IsComputing">
+                                    <i class="bi bi-folder2-open"></i> Parcourir
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">📋 Format requis</h6>
+                                    <ul class="list-unstyled small">
+                                        <li>✓ Fichier Excel (.xlsx/.xls)</li>
+                                        <li>✓ Colonnes : Matricule, AR1, AV1, DIST1</li>
+                                        <li>✓ Optionnel : AR2, AV2, DIST2</li>
+                                        <li>✓ Première ligne = en-têtes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Informations du fichier sélectionné *@
+                    @if (selectedFile != null)
+                    {
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-file-earmark-excel"></i> Fichier sélectionné</h6>
+                            <p class="mb-1"><strong>Nom :</strong> @selectedFile.FileName</p>
+                            <p class="mb-1"><strong>Taille :</strong> @FormatFileSize(selectedFile.FileSize)</p>
+                            <p class="mb-0"><strong>Type :</strong> @selectedFile.ContentType</p>
+                        </div>
+                    }
+
+                    @* Barre de progression *@
+                    @if (CompensationSvc.IsComputing || CompensationSvc.ProgressPercentage > 0)
+                    {
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">@CompensationSvc.StatusMessage</span>
+                                <span class="text-muted">@CompensationSvc.ProgressPercentage%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar progress-bar-striped @(CompensationSvc.IsComputing ? "progress-bar-animated" : "")" 
+                                     style="width: @CompensationSvc.ProgressPercentage%"></div>
+                            </div>
+                        </div>
+                    }
+
+                    @* Messages de validation *@
+                    @if (CompensationSvc.ValidationMessages.Any())
+                    {
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-check-circle"></i> Validation des données</h6>
+                            </div>
+                            <div class="card-body">
+                                @foreach (var message in CompensationSvc.ValidationMessages)
+                                {
+                                    <div class="mb-1">@message</div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @* Aperçu des données *@
+                    @if (CompensationSvc.HasData)
+                    {
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-table"></i> Aperçu des données 
+                                    <span class="badge bg-primary ms-2">@CompensationSvc.DataCount points</span>
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive" style="max-height: 400px;">
+                                    <table class="table table-sm table-hover">
+                                        <thead class="table-light sticky-top">
+                                            <tr>
+                                                <th>Matricule</th>
+                                                <th>AR1 (m)</th>
+                                                <th>AV1 (m)</th>
+                                                <th>ΔH1 (m)</th>
+                                                <th>DIST1 (m)</th>
+                                                <th>AR2 (m)</th>
+                                                <th>AV2 (m)</th>
+                                                <th>ΔH2 (m)</th>
+                                                <th>Contrôle</th>
+                                                <th>Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in displayData.Take(100)) // Limiter l'affichage
+                                            {
+                                                <tr class="@(item.IsValid ? "" : "table-warning")">
+                                                    <td><strong>@item.Matricule</strong></td>
+                                                    <td>@item.AR1.ToString("F4")</td>
+                                                    <td>@item.AV1.ToString("F4")</td>
+                                                    <td>@item.DeltaH1.ToString("F4")</td>
+                                                    <td>@(item.DIST1?.ToString("F1") ?? "-")</td>
+                                                    <td>@(item.AR2?.ToString("F4") ?? "-")</td>
+                                                    <td>@(item.AV2?.ToString("F4") ?? "-")</td>
+                                                    <td>@(item.DeltaH2?.ToString("F4") ?? "-")</td>
+                                                    <td>@(item.Controle?.ToString("F4") ?? "-")</td>
+                                                    <td>@item.ValidationStatus</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                @if (CompensationSvc.DataCount > 100)
+                                {
+                                    <div class="text-muted mt-2">
+                                        <i class="bi bi-info-circle"></i> 
+                                        Affichage des 100 premiers points sur @CompensationSvc.DataCount total
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @* Actions *@
+                    <div class="d-flex justify-content-between mt-4">
+                        <button class="btn btn-outline-secondary" 
+                                onclick="@ResetData" 
+                                disabled="@CompensationSvc.IsComputing">
+                            <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+                        </button>
+                        
+                        @if (CompensationSvc.HasData && !CompensationSvc.HasValidationIssues)
+                        {
+                            <a href="/parameters" class="btn btn-success btn-lg">
+                                <i class="bi bi-arrow-right"></i> Continuer vers les Paramètres
+                            </a>
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private FileUploadModel? selectedFile;
+    private bool isDragOver = false;
+    private List<LevelingDataDisplayModel> displayData = new();
+
+    protected override void OnInitialized()
+    {
+        CompensationSvc.PropertyChanged += OnServicePropertyChanged;
+        RefreshDisplayData();
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file != null)
+            {
+                selectedFile = new FileUploadModel
+                {
+                    FileName = file.Name,
+                    FileSize = file.Size,
+                    ContentType = file.ContentType,
+                    UploadTime = DateTime.Now
+                };
+
+                // Validation du fichier
+                if (!IsValidExcelFile(file))
+                {
+                    selectedFile.ValidationErrors.Add("Format de fichier non supporté");
+                    await ShowNotification("Format de fichier invalide", NotificationModel.NotificationType.Error);
+                    return;
+                }
+
+                if (file.Size > 10 * 1024 * 1024) // 10MB max
+                {
+                    selectedFile.ValidationErrors.Add("Fichier trop volumineux (max 10MB)");
+                    await ShowNotification("Fichier trop volumineux", NotificationModel.NotificationType.Error);
+                    return;
+                }
+
+                // Sauvegarde temporaire du fichier
+                var tempPath = Path.GetTempFileName() + ".xlsx";
+                await using var fileStream = new FileStream(tempPath, FileMode.Create);
+                await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(fileStream);
+                fileStream.Close();
+
+                // Import des données
+                var success = await CompensationSvc.ImportDataFromFileAsync(tempPath);
+                
+                if (success)
+                {
+                    selectedFile.IsValid = true;
+                    RefreshDisplayData();
+                    await ShowNotification($"Import réussi : {CompensationSvc.DataCount} points importés", 
+                                         NotificationModel.NotificationType.Success);
+                }
+                else
+                {
+                    await ShowNotification("Erreur lors de l'import des données", 
+                                         NotificationModel.NotificationType.Error);
+                }
+
+                // Nettoyer le fichier temporaire
+                try { File.Delete(tempPath); } catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification($"Erreur : {ex.Message}", NotificationModel.NotificationType.Error);
+        }
+        
+        StateHasChanged();
+    }
+
+    private void OnServicePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(() => {
+            RefreshDisplayData();
+            StateHasChanged();
+        });
+    }
+
+    private void RefreshDisplayData()
+    {
+        displayData = CompensationSvc.LevelingData
+            .Select(LevelingDataDisplayModel.FromLevelingData)
+            .ToList();
+    }
+
+    private void ResetData()
+    {
+        CompensationSvc.Reset();
+        selectedFile = null;
+        displayData.Clear();
+        StateHasChanged();
+    }
+
+    private bool IsValidExcelFile(IBrowserFile file)
+    {
+        var validExtensions = new[] { ".xlsx", ".xls" };
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        return validExtensions.Contains(extension);
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB" };
+        int counter = 0;
+        decimal number = bytes;
+        while (Math.Round(number / 1024) >= 1)
+        {
+            number /= 1024;
+            counter++;
+        }
+        return $"{number:n1} {suffixes[counter]}";
+    }
+
+    private async Task ShowNotification(string message, NotificationModel.NotificationType type)
+    {
+        // Implémentation des notifications Toast avec JS
+        var typeStr = type.ToString().ToLower();
+        await JSRuntime.InvokeVoidAsync("showToast", message, typeStr);
+    }
+
+    public void Dispose()
+    {
+        CompensationSvc.PropertyChanged -= OnServicePropertyChanged;
+    }
+}
