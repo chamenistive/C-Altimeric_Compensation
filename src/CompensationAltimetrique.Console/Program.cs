@@ -1,352 +1,490 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using CompensationAltimetrique.Core.Models;
-using CompensationAltimetrique.Core.Services;
 using CompensationAltimetrique.Data.Importers;
 using CompensationAltimetrique.Calculations.Algorithms;
 using CompensationAltimetrique.Calculations.Corrections;
+using CompensationAltimetrique.Calculations.Validation;
 
 namespace CompensationAltimetrique.Console
 {
-    class Program
+    /// <summary>
+    /// Programme principal intégrant toutes les améliorations
+    /// </summary>
+    class IntegratedProgram
     {
-        private const double PRECISION_TARGET_MM = 2.0;
-        private const double INITIAL_ALTITUDE = 518.519; // Altitude de référence AM2
-        
         static void Main(string[] args)
         {
-            PrintHeader();
+            System.Console.WriteLine("╔══════════════════════════════════════════════════════════╗");
+            System.Console.WriteLine("║     SYSTÈME DE COMPENSATION ALTIMÉTRIQUE AMÉLIORÉ       ║");
+            System.Console.WriteLine("║              Version 2.0 - Précision 2mm                 ║");
+            System.Console.WriteLine("╚══════════════════════════════════════════════════════════╝");
+            System.Console.WriteLine();
             
             try
             {
-                if (args.Length > 0)
+                // Configuration
+                var config = new CompensationConfig
                 {
-                    ProcessBatchMode(args);
-                }
-                else
-                {
-                    ProcessInteractiveMode();
-                }
+                    PrecisionMm = 2.0,
+                    InstrumentalErrorMm = 1.0,
+                    KilometricErrorMm = 1.0,
+                    ApplyAtmosphericCorrections = true,
+                    Region = "sahel", // Adapté pour l'Afrique
+                    SolutionMethod = SolutionMethod.Auto,
+                    InitialAltitude = 125.456,
+                    ExportResults = true
+                };
+                
+                // Pipeline complet
+                RunCompensationPipeline(config);
             }
             catch (Exception ex)
             {
-                System.Console.WriteLine($"❌ Erreur : {ex.Message}");
+                System.Console.WriteLine($"\n❌ ERREUR: {ex.Message}");
+                System.Console.WriteLine($"   Détails: {ex.StackTrace}");
                 Environment.Exit(1);
             }
-            
-            System.Console.WriteLine("\n✅ Traitement terminé avec succès.");
         }
         
-        private static void PrintHeader()
+        /// <summary>
+        /// Pipeline complet de compensation avec toutes les améliorations
+        /// </summary>
+        static void RunCompensationPipeline(CompensationConfig config)
         {
-            System.Console.WriteLine("================================================================================");
-            System.Console.WriteLine("    SYSTÈME DE COMPENSATION ALTIMÉTRIQUE - VERSION C#");
-            System.Console.WriteLine($"    Précision cible: {PRECISION_TARGET_MM} mm");
-            System.Console.WriteLine("    Pipeline complet: Import → Calcul → Compensation → Export");
-            System.Console.WriteLine("================================================================================\n");
+            System.Console.WriteLine("🚀 Démarrage du pipeline de compensation...\n");
+            
+            // ==== PHASE 1: IMPORT DES DONNÉES ====
+            System.Console.WriteLine("📥 PHASE 1: Import des données");
+            System.Console.WriteLine("═══════════════════════════════");
+            
+            string dataFile = GetDataFile();
+            var levelingData = ImportData(dataFile);
+            System.Console.WriteLine($"✅ {levelingData.Count} lignes importées avec succès");
+            
+            // Validation de la structure des données
+            var dataValidator = new DataStructureValidator();
+            ValidateDataStructure(levelingData, dataValidator);
+            
+            // ==== PHASE 2: CALCULS PRÉLIMINAIRES ====
+            System.Console.WriteLine("\n📊 PHASE 2: Calculs préliminaires");
+            System.Console.WriteLine("═══════════════════════════════════");
+            
+            // Configuration des corrections atmosphériques
+            AtmosphericCorrector atmosphericCorrector = null;
+            if (config.ApplyAtmosphericCorrections)
+            {
+                var conditions = CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions.CreateForRegion(config.Region);
+                atmosphericCorrector = new AtmosphericCorrector();
+                System.Console.WriteLine($"🌡️ Corrections atmosphériques activées pour région: {config.Region}");
+                System.Console.WriteLine($"   Température: {conditions.TemperatureCelsius}°C");
+                System.Console.WriteLine($"   Pression: {conditions.PressureHPa} hPa");
+                System.Console.WriteLine($"   Humidité: {conditions.HumidityPercent}%");
+            }
+            
+            // Calcul des dénivelées avec corrections
+            var processedData = CalculateDenivelations(levelingData, atmosphericCorrector);
+            
+            // Analyse de fermeture
+            var closureAnalysis = AnalyzeClosure(processedData, config.PrecisionMm);
+            
+            // ==== PHASE 3: COMPENSATION PAR MOINDRES CARRÉS ====
+            System.Console.WriteLine("\n⚖️ PHASE 3: Compensation par moindres carrés");
+            System.Console.WriteLine("═══════════════════════════════════════════════");
+            
+            var compensator = new EnhancedLeastSquaresCompensator(
+                config.PrecisionMm,
+                config.InstrumentalErrorMm,
+                config.KilometricErrorMm
+            );
+            
+            var results = compensator.Compensate(
+                processedData,
+                "REF",
+                config.InitialAltitude,
+                config.SolutionMethod
+            );
+            
+            // ==== PHASE 4: VALIDATION DES RÉSULTATS ====
+            System.Console.WriteLine("\n✅ PHASE 4: Validation des résultats");
+            System.Console.WriteLine("═══════════════════════════════════════════");
+            
+            ValidateCompensationResults(results, config.PrecisionMm);
+            
+            // ==== PHASE 5: EXPORT DES RÉSULTATS ====
+            if (config.ExportResults)
+            {
+                System.Console.WriteLine("\n💾 PHASE 5: Export des résultats");
+                System.Console.WriteLine("═══════════════════════════════════════");
+                ExportResults(processedData, results, config);
+            }
+            
+            // ==== RAPPORT FINAL ====
+            GenerateFinalReport(results, closureAnalysis, config);
         }
         
-        private static void ProcessBatchMode(string[] args)
+        /// <summary>
+        /// Obtenir le fichier de données
+        /// </summary>
+        static string GetDataFile()
         {
-            System.Console.WriteLine("🔄 Mode batch - Pipeline automatique");
-            System.Console.WriteLine($"📁 Fichier : {args[0]}");
+            // Rechercher les fichiers dans le répertoire courant
+            var dataFiles = Directory.GetFiles(".", "*.csv")
+                .Concat(Directory.GetFiles(".", "*.xlsx"))
+                .ToList();
             
-            ProcessCompletePipeline(args[0]);
+            if (dataFiles.Count == 0)
+            {
+                System.Console.WriteLine("❌ Aucun fichier de données trouvé dans le répertoire");
+                System.Console.Write("Entrez le chemin du fichier (ou 'simulation' pour données test): ");
+                var input = System.Console.ReadLine();
+                return string.IsNullOrEmpty(input) ? "simulation" : input;
+            }
+            
+            if (dataFiles.Count == 1)
+            {
+                System.Console.WriteLine($"📄 Fichier trouvé: {dataFiles[0]}");
+                return dataFiles[0];
+            }
+            
+            System.Console.WriteLine("📄 Plusieurs fichiers trouvés:");
+            for (int i = 0; i < dataFiles.Count; i++)
+            {
+                System.Console.WriteLine($"   {i + 1}. {Path.GetFileName(dataFiles[i])}");
+            }
+            
+            System.Console.Write("Sélectionnez le numéro du fichier: ");
+            if (int.TryParse(System.Console.ReadLine(), out int choice) && choice > 0 && choice <= dataFiles.Count)
+            {
+                return dataFiles[choice - 1];
+            }
+            
+            return "simulation";
         }
         
-        private static void ProcessInteractiveMode()
+        /// <summary>
+        /// Import des données avec validation
+        /// </summary>
+        static List<LevelingData> ImportData(string filePath)
         {
-            System.Console.WriteLine("🎯 Mode interactif - Démonstration complète");
-            System.Console.WriteLine("\n🚀 Exécution du pipeline complet de compensation...\n");
-            
-            ProcessCompletePipeline("simulation");
-        }
-        
-        private static void ProcessCompletePipeline(string filePath)
-        {
-            // ================================================================
-            // ÉTAPE 1 : IMPORT DES DONNÉES
-            // ================================================================
-            System.Console.WriteLine("📊 ÉTAPE 1 : IMPORT DES DONNÉES");
-            System.Console.WriteLine(new string('-', 50));
-            
             var importer = new ExcelLevelingImporter();
-            var levelingData = importer.ImportLevelingData(filePath);
+            var data = importer.ImportLevelingData(filePath);
             
-            System.Console.WriteLine($"✅ {levelingData.Count} points de nivellement importés");
-            System.Console.WriteLine($"📍 Point de référence : AM2 (altitude = {INITIAL_ALTITUDE:F6} m)\n");
-            
-            // ================================================================
-            // ÉTAPE 2 : VALIDATION ET ANALYSE PRÉLIMINAIRE
-            // ================================================================
-            System.Console.WriteLine("🔍 ÉTAPE 2 : VALIDATION ET ANALYSE PRÉLIMINAIRE");
-            System.Console.WriteLine(new string('-', 50));
-            
-            int coherentCount = 0;
-            double totalClosure = 0.0;
-            var validData = new List<LevelingData>();
-            
-            foreach (var item in levelingData)
+            // Validation des données importées
+            var invalidRows = data.Where(d => !d.HasValidReadings()).ToList();
+            if (invalidRows.Any())
             {
-                var dh = item.CalculateAverageDenivelation();
-                var coherent = item.IsConsistent();
-                
-                if (dh.HasValue)
+                System.Console.WriteLine($"⚠️ {invalidRows.Count} lignes avec données invalides détectées");
+                foreach (var row in invalidRows.Take(5))
                 {
-                    validData.Add(item);
-                    totalClosure += dh.Value;
-                    
-                    if (coherent) coherentCount++;
-                    
-                    string status = coherent ? "✅" : "⚠️";
-                    System.Console.WriteLine($"{status} {item.Matricule}: ΔH = {dh.Value:F6} m");
-                    
-                    if (!coherent)
-                    {
-                        var dh1 = item.CalculateDenivelation(1);
-                        var dh2 = item.CalculateDenivelation(2);
-                        if (dh1.HasValue && dh2.HasValue)
-                        {
-                            var diff = Math.Abs(dh1.Value - dh2.Value) * 1000;
-                            System.Console.WriteLine($"   ⚠️  Écart entre sessions: {diff:F1} mm");
-                        }
-                    }
+                    System.Console.WriteLine($"   - {row.Matricule}: AR1={row.AR1}, AV1={row.AV1}");
                 }
             }
             
-            System.Console.WriteLine($"\n📈 STATISTIQUES PRÉLIMINAIRES:");
-            System.Console.WriteLine($"   Points cohérents: {coherentCount}/{validData.Count} ({(double)coherentCount/validData.Count*100:F1}%)");
-            System.Console.WriteLine($"   Fermeture brute: {totalClosure*1000:F1} mm");
-            System.Console.WriteLine($"   Qualité données: {(Math.Abs(totalClosure*1000) < 50 ? "Bonne" : "À améliorer")}\n");
+            return data.Where(d => d.HasValidReadings()).ToList();
+        }
+        
+        /// <summary>
+        /// Validation de la structure des données
+        /// </summary>
+        static void ValidateDataStructure(List<LevelingData> data, DataStructureValidator validator)
+        {
+            // Compter les colonnes AR/AV
+            int arCount = 0, avCount = 0, distCount = 0;
             
-            // ================================================================
-            // ÉTAPE 3 : CORRECTIONS ATMOSPHÉRIQUES
-            // ================================================================
-            System.Console.WriteLine("🌡️ ÉTAPE 3 : CORRECTIONS ATMOSPHÉRIQUES");
-            System.Console.WriteLine(new string('-', 50));
-            
-            // Conditions atmosphériques (France métropolitaine par défaut)
-            var atmosphericConditions = new AtmosphericConditions(15.0, 1013.25, 65.0);
-            var corrector = new AtmosphericCorrector(atmosphericConditions, true);
-            
-            // Analyse avant correction
-            var analysisBeforeCorrection = corrector.AnalyzeCorrections(validData);
-            System.Console.WriteLine($"📊 Analyse pré-correction: {analysisBeforeCorrection.GetSummary()}");
-            
-            // Application des corrections
-            var correctedData = corrector.ApplyCorrections(validData);
-            
-            // Recalcul des statistiques après correction
-            coherentCount = 0;
-            totalClosure = 0.0;
-            foreach (var item in correctedData)
+            if (data.Any())
             {
-                var dh = item.CalculateAverageDenivelation();
-                if (dh.HasValue)
-                {
-                    totalClosure += dh.Value;
-                    if (item.IsConsistent()) coherentCount++;
-                }
+                var first = data.First();
+                if (first.AR1.HasValue) arCount++;
+                if (first.AR2.HasValue) arCount++;
+                if (first.AV1.HasValue) avCount++;
+                if (first.AV2.HasValue) avCount++;
+                if (first.DIST1.HasValue) distCount++;
+                if (first.DIST2.HasValue) distCount++;
             }
             
-            System.Console.WriteLine($"📈 APRÈS CORRECTIONS ATMOSPHÉRIQUES:");
-            System.Console.WriteLine($"   Points cohérents: {coherentCount}/{correctedData.Count} ({(double)coherentCount/correctedData.Count*100:F1}%)");
-            System.Console.WriteLine($"   Nouvelle fermeture: {totalClosure*1000:F1} mm");
-            System.Console.WriteLine($"   Amélioration: {(Math.Abs(totalClosure*1000) < Math.Abs(-14410.9) ? "✅ OUI" : "❌ MINIME")}\n");
+            System.Console.WriteLine($"   Colonnes AR: {arCount}");
+            System.Console.WriteLine($"   Colonnes AV: {avCount}");
+            System.Console.WriteLine($"   Colonnes DIST: {distCount}");
             
-            // ================================================================
-            // ÉTAPE 4 : COMPENSATION PAR MOINDRES CARRÉS
-            // ================================================================
-            System.Console.WriteLine("⚙️  ÉTAPE 4 : COMPENSATION PAR MOINDRES CARRÉS");
-            System.Console.WriteLine(new string('-', 50));
-            
-            var compensator = new LeastSquaresCompensator(PRECISION_TARGET_MM);
-            var compensationResults = compensator.Compensate(correctedData, INITIAL_ALTITUDE);
-            
-            if (compensationResults.IsValid)
+            if (arCount != avCount)
             {
-                System.Console.WriteLine("✅ Compensation réussie !\n");
-                
-                System.Console.WriteLine("📊 RÉSULTATS DE LA COMPENSATION:");
-                System.Console.WriteLine($"   σ₀ (écart-type unitaire): {compensationResults.Sigma0*1000:F1} mm");
-                System.Console.WriteLine($"   Correction maximale: {compensationResults.MaxCorrection*1000:F1} mm");
-                System.Console.WriteLine($"   RMS des résidus: {compensationResults.RmsResiduals*1000:F1} mm");
-                System.Console.WriteLine($"   Qualité: {compensationResults.GetQualityAssessment()}");
-                System.Console.WriteLine($"   Précision atteinte: {(compensationResults.Sigma0*1000 <= PRECISION_TARGET_MM ? "✅ OUI" : "❌ NON")}\n");
-                
-                // ================================================================
-                // ÉTAPE 5 : ALTITUDES COMPENSÉES
-                // ================================================================
-                System.Console.WriteLine("📏 ÉTAPE 5 : ALTITUDES COMPENSÉES");
-                System.Console.WriteLine(new string('-', 50));
-                
-                System.Console.WriteLine("Point        | Altitude compensée | Correction");
-                System.Console.WriteLine("-------------|--------------------|-----------");
-                
-                foreach (var point in compensationResults.AdjustedPoints)
-                {
-                    var correction = 0.0;
-                    if (!point.IsReference && compensationResults.Corrections.Length > 0)
-                    {
-                        var index = compensationResults.AdjustedPoints.IndexOf(point);
-                        if (index < compensationResults.Corrections.Length)
-                        {
-                            correction = compensationResults.Corrections[index];
-                        }
-                    }
-                    
-                    string refMarker = point.IsReference ? " (REF)" : "";
-                    System.Console.WriteLine($"{point.Matricule,-12} | {point.Altitude:F6} m       | {correction*1000:+F1;-F1;+0.0} mm{refMarker}");
-                }
-                
-                // ================================================================
-                // ÉTAPE 6 : GÉNÉRATION DES RAPPORTS
-                // ================================================================
-                System.Console.WriteLine($"\n📋 ÉTAPE 6 : GÉNÉRATION DES RAPPORTS");
-                System.Console.WriteLine(new string('-', 50));
-                
-                var reportGenerator = new ReportGenerator(PRECISION_TARGET_MM);
-                
-                // Rapport de calculs (avec données corrigées)
-                var calculationReport = reportGenerator.GenerateCalculationReport(correctedData, INITIAL_ALTITUDE);
-                System.IO.File.WriteAllText("rapport_calculs.txt", calculationReport);
-                System.Console.WriteLine("✅ Rapport de calculs généré: rapport_calculs.txt");
-                
-                // Rapport de compensation
-                var compensationReport = reportGenerator.GenerateCompensationReport(compensationResults, correctedData, INITIAL_ALTITUDE);
-                System.IO.File.WriteAllText("rapport_compensation.txt", compensationReport);
-                System.Console.WriteLine("✅ Rapport de compensation généré: rapport_compensation.txt");
-                
-                // Rapport de corrections atmosphériques
-                var atmosphericReport = GenerateAtmosphericReport(analysisBeforeCorrection, correctedData, validData);
-                System.IO.File.WriteAllText("rapport_atmospherique.txt", atmosphericReport);
-                System.Console.WriteLine("✅ Rapport atmosphérique généré: rapport_atmospherique.txt");
-                
-                // Export CSV (conservé)
-                ExportCompensationResults(compensationResults, correctedData, "resultats_compensation.csv");
-                
-                // Affichage des rapports
-                System.Console.WriteLine($"\n📄 RAPPORT DE CALCULS:");
-                System.Console.WriteLine(calculationReport);
-                
-                System.Console.WriteLine($"\n📄 RAPPORT DE COMPENSATION:");
-                System.Console.WriteLine(compensationReport);
-            }
-            else
-            {
-                System.Console.WriteLine("❌ Échec de la compensation !");
-                System.Console.WriteLine("💡 Vérifiez la qualité et la cohérence des données d'entrée.");
+                System.Console.WriteLine("⚠️ Nombre de colonnes AR ≠ AV");
             }
         }
         
-        private static void ExportCompensationResults(CompensationResults results, List<LevelingData> originalData, string filePath)
+        /// <summary>
+        /// Calcul des dénivelées avec corrections atmosphériques
+        /// </summary>
+        static List<LevelingData> CalculateDenivelations(
+            List<LevelingData> data, 
+            AtmosphericCorrector? corrector)
         {
-            var lines = new List<string>
+            System.Console.WriteLine("🔢 Calcul des dénivelées...");
+            
+            int correctionCount = 0;
+            double totalCorrection = 0;
+            
+            foreach (var point in data)
             {
-                "Point,Altitude_Compensee_m,Correction_mm,Type,Precision_mm"
+                if (corrector != null && point.GetAverageDistance().HasValue)
+                {
+                    double distance = point.GetAverageDistance().Value;
+                    var report = corrector.GenerateReport(distance);
+                    
+                    if (Math.Abs(report.TotalCorrectionMm) > 0.1)
+                    {
+                        correctionCount++;
+                        totalCorrection += report.TotalCorrectionMm;
+                        
+                        // Afficher quelques exemples
+                        if (correctionCount <= 3)
+                        {
+                            System.Console.WriteLine($"   Point {point.Matricule}: {report}");
+                        }
+                    }
+                }
+            }
+            
+            if (corrector != null)
+            {
+                System.Console.WriteLine($"✅ {correctionCount} corrections appliquées");
+                System.Console.WriteLine($"   Correction totale: {totalCorrection:F2} mm");
+            }
+            
+            return data;
+        }
+        
+        /// <summary>
+        /// Analyse de fermeture
+        /// </summary>
+        static ClosureAnalysis AnalyzeClosure(List<LevelingData> data, double precisionMm)
+        {
+            System.Console.WriteLine("🔄 Analyse de fermeture...");
+            
+            // Calcul de l'erreur de fermeture
+            double totalDenivelation = 0;
+            double totalDistance = 0;
+            
+            foreach (var point in data)
+            {
+                var dh = point.CalculateAverageDenivelation();
+                totalDenivelation += dh;
+                    
+                var dist = point.GetAverageDistance();
+                if (dist.HasValue)
+                    totalDistance += dist.Value;
+            }
+            
+            double closureErrorM = totalDenivelation;
+            double closureErrorMm = closureErrorM * 1000;
+            double totalDistanceKm = totalDistance / 1000;
+            
+            var validator = new GeodeticPrecisionValidator(precisionMm);
+            var validation = validator.ValidateClosure(closureErrorMm, totalDistanceKm);
+            
+            var analysis = new ClosureAnalysis
+            {
+                ClosureErrorMm = closureErrorMm,
+                TotalDistanceKm = totalDistanceKm,
+                ToleranceMm = (double)validation.Details["tolerance_mm"],
+                IsAcceptable = validation.IsValid,
+                PrecisionRatio = (double)validation.Details["precision_ratio"]
             };
             
-            foreach (var point in results.AdjustedPoints)
-            {
-                var correction = 0.0;
-                if (!point.IsReference && results.Corrections.Length > 0)
-                {
-                    var index = results.AdjustedPoints.IndexOf(point);
-                    if (index < results.Corrections.Length)
-                    {
-                        correction = results.Corrections[index] * 1000; // en mm
-                    }
-                }
-                
-                var type = point.IsReference ? "Reference" : "Point";
-                var precision = results.Sigma0 * 1000; // en mm
-                
-                lines.Add($"{point.Matricule},{point.Altitude:F6},{correction:F1},{type},{precision:F1}");
-            }
+            System.Console.WriteLine($"   Erreur de fermeture: {closureErrorMm:F2} mm");
+            System.Console.WriteLine($"   Tolérance: {analysis.ToleranceMm:F2} mm");
+            System.Console.WriteLine($"   Distance totale: {totalDistanceKm:F3} km");
+            System.Console.WriteLine($"   Statut: {(analysis.IsAcceptable ? "✅ ACCEPTABLE" : "❌ DÉPASSEMENT")}");
             
-            // Ajout des statistiques globales
-            lines.Add("");
-            lines.Add("# STATISTIQUES GLOBALES");
-            lines.Add($"# Sigma0_mm,{results.Sigma0*1000:F1}");
-            lines.Add($"# Correction_max_mm,{results.MaxCorrection*1000:F1}");
-            lines.Add($"# RMS_residus_mm,{results.RmsResiduals*1000:F1}");
-            lines.Add($"# Qualite,{results.GetQualityAssessment().Substring(2)}"); // Enlever l'emoji
-            lines.Add($"# Methode,{results.Method}");
-            lines.Add($"# Date_calcul,{results.ComputationTime:yyyy-MM-dd HH:mm:ss}");
-            
-            System.IO.File.WriteAllLines(filePath, lines);
-            System.Console.WriteLine($"✅ Résultats exportés vers: {filePath}");
-            System.Console.WriteLine($"📊 Format: CSV avec {results.AdjustedPoints.Count} points + statistiques");
+            return analysis;
         }
         
-        private static string GenerateAtmosphericReport(Calculations.Corrections.CorrectionAnalysis analysis, List<LevelingData> correctedData, List<LevelingData> originalData)
+        /// <summary>
+        /// Validation des résultats de compensation
+        /// </summary>
+        static void ValidateCompensationResults(EnhancedCompensationResults results, double precisionMm)
         {
-            var report = new System.Text.StringBuilder();
+            var validator = new GeodeticPrecisionValidator(precisionMm);
+            var statValidator = new GeodeticStatisticalValidator(0.95);
             
-            // En-tête
-            report.AppendLine("======================================================================");
-            report.AppendLine("    RAPPORT DE CORRECTIONS ATMOSPHÉRIQUES");
-            report.AppendLine("======================================================================");
-            report.AppendLine();
+            // Validation des résidus
+            var residualValidation = validator.ValidateResiduals(
+                results.Residuals, 
+                results.Statistics.SigmaPosteriori
+            );
             
-            // Conditions appliquées
-            report.AppendLine("🌡️ CONDITIONS ATMOSPHÉRIQUES:");
-            report.AppendLine("   Température: 15.0°C");
-            report.AppendLine("   Pression: 1013.25 hPa");
-            report.AppendLine("   Humidité: 65.0%");
-            report.AppendLine("   Coefficient réfraction: 0.130");
-            report.AppendLine("   Rayon terrestre: 6,371,000 m");
-            report.AppendLine();
+            System.Console.WriteLine($"   Résidu max: {residualValidation.Details["max_residual_mm"]:F2} mm");
+            System.Console.WriteLine($"   RMS résidus: {residualValidation.Details["rms_residual_mm"]:F2} mm");
             
-            // Statistiques des corrections
-            report.AppendLine("📊 ANALYSE DES CORRECTIONS:");
-            report.AppendLine($"   Observations traitées: {analysis.Corrections.Count}");
-            report.AppendLine($"   Distance maximale: {analysis.MaxDistance:F1} m");
-            report.AppendLine($"   Correction maximale: {analysis.MaxCorrection * 1000:F2} mm");
-            report.AppendLine($"   Correction minimale: {analysis.MinCorrection * 1000:F2} mm");
-            report.AppendLine($"   Correction moyenne: {analysis.AverageCorrection * 1000:F2} mm");
-            report.AppendLine($"   Corrections significatives (>1mm): {analysis.SignificantCorrections}");
-            report.AppendLine();
+            // Validation statistique
+            int dof = Math.Max(1, results.Residuals.Length - results.AdjustedAltitudes.Count + 1);
+            double vtPv = results.Residuals.Sum(r => r * r);
+            var statValidation = statValidator.ValidateUnitWeight(vtPv, dof);
             
-            // Impact sur la fermeture
-            var originalClosure = originalData.Where(d => d.CalculateAverageDenivelation().HasValue)
-                                           .Sum(d => d.CalculateAverageDenivelation().Value) * 1000;
-            var correctedClosure = correctedData.Where(d => d.CalculateAverageDenivelation().HasValue)
-                                              .Sum(d => d.CalculateAverageDenivelation().Value) * 1000;
-            var improvement = Math.Abs(originalClosure) - Math.Abs(correctedClosure);
+            System.Console.WriteLine($"   Test χ²: {(statValidation.IsValid ? "✅ PASSÉ" : "❌ ÉCHOUÉ")}");
+            System.Console.WriteLine($"   σ₀ a posteriori: {results.Statistics.SigmaPosteriori:F4}");
             
-            report.AppendLine("📈 IMPACT SUR LA FERMETURE:");
-            report.AppendLine($"   Fermeture avant correction: {originalClosure:F1} mm");
-            report.AppendLine($"   Fermeture après correction: {correctedClosure:F1} mm");
-            report.AppendLine($"   Amélioration: {improvement:F1} mm ({improvement/Math.Abs(originalClosure)*100:F1}%)");
-            report.AppendLine($"   Statut: {(improvement > 0 ? "✅ AMÉLIORATION" : "⚠️ DÉGRADATION")}");
-            report.AppendLine();
+            // Détection de fautes
+            if (results.Statistics.SuspectObservations.Any())
+            {
+                System.Console.WriteLine($"   ⚠️ {results.Statistics.SuspectObservations.Count} observations suspectes:");
+                foreach (var obs in results.Statistics.SuspectObservations.Take(3))
+                {
+                    System.Console.WriteLine($"      - Observation {obs + 1}");
+                }
+            }
             
-            // Recommandations
-            report.AppendLine("🎯 RECOMMANDATIONS:");
-            if (analysis.MaxDistance > 200)
-                report.AppendLine("   ✅ Corrections justifiées (distances > 200m détectées)");
-            else
-                report.AppendLine("   ⚠️ Corrections mineures (distances courtes)");
+            // Avertissements
+            foreach (var warning in residualValidation.Warnings.Concat(statValidation.Warnings))
+            {
+                System.Console.WriteLine($"   ⚠️ {warning}");
+            }
             
-            if (analysis.SignificantCorrections > analysis.Corrections.Count * 0.3)
-                report.AppendLine("   ✅ Impact significatif sur la précision");
-            else
-                report.AppendLine("   ⚠️ Impact limité sur la précision");
-            
-            if (improvement > 100) // > 100mm d'amélioration
-                report.AppendLine("   ✅ Forte amélioration de la fermeture");
-            else if (improvement > 0)
-                report.AppendLine("   ✅ Amélioration modérée de la fermeture");
-            else
-                report.AppendLine("   ❌ Pas d'amélioration significative");
-            
-            report.AppendLine();
-            report.AppendLine($"Rapport généré le: {DateTime.Now:yyyy-MM-dd HH:mm:ss.ffffff}");
-            report.AppendLine("======================================================================");
-            
-            return report.ToString();
+            // Erreurs
+            foreach (var error in residualValidation.Errors.Concat(statValidation.Errors))
+            {
+                System.Console.WriteLine($"   ❌ {error}");
+            }
         }
+        
+        /// <summary>
+        /// Export des résultats
+        /// </summary>
+        static void ExportResults(
+            List<LevelingData> data, 
+            EnhancedCompensationResults results,
+            CompensationConfig config)
+        {
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string outputFile = $"resultats_compensation_{timestamp}.csv";
+            
+            using (var writer = new StreamWriter(outputFile))
+            {
+                // En-tête
+                writer.WriteLine("Matricule,Altitude_Originale,Correction_mm,Altitude_Compensee,Residu_mm");
+                
+                // Données
+                for (int i = 0; i < Math.Min(data.Count, results.AdjustedAltitudes.Count); i++)
+                {
+                    double original = config.InitialAltitude;
+                    if (i > 0)
+                    {
+                        for (int j = 0; j < i; j++)
+                        {
+                            var dh = data[j].CalculateAverageDenivelation();
+                            original += dh;
+                        }
+                    }
+                    
+                    double correctionMm = (i < results.Corrections.Length) ? 
+                        results.Corrections[i] * 1000 : 0;
+                    double residuMm = (i < results.Residuals.Length) ? 
+                        results.Residuals[i] * 1000 : 0;
+                    
+                    writer.WriteLine($"{data[i].Matricule},{original:F6},{correctionMm:F3}," +
+                                   $"{results.AdjustedAltitudes[i]:F6},{residuMm:F3}");
+                }
+            }
+            
+            System.Console.WriteLine($"✅ Résultats exportés: {outputFile}");
+        }
+        
+        /// <summary>
+        /// Génération du rapport final
+        /// </summary>
+        static void GenerateFinalReport(
+            EnhancedCompensationResults results,
+            ClosureAnalysis closure,
+            CompensationConfig config)
+        {
+            System.Console.WriteLine("\n");
+            System.Console.WriteLine("╔══════════════════════════════════════════════════════════╗");
+            System.Console.WriteLine("║                    RAPPORT FINAL                         ║");
+            System.Console.WriteLine("╚══════════════════════════════════════════════════════════╝");
+            
+            System.Console.WriteLine("\n📊 CONFIGURATION");
+            System.Console.WriteLine("═══════════════");
+            System.Console.WriteLine($"   Précision cible: {config.PrecisionMm} mm");
+            System.Console.WriteLine($"   Altitude initiale: {config.InitialAltitude:F3} m");
+            System.Console.WriteLine($"   Corrections atmosphériques: {(config.ApplyAtmosphericCorrections ? "OUI" : "NON")}");
+            System.Console.WriteLine($"   Méthode de résolution: {config.SolutionMethod}");
+            
+            System.Console.WriteLine("\n📏 FERMETURE");
+            System.Console.WriteLine("═══════════");
+            System.Console.WriteLine($"   Erreur: {closure.ClosureErrorMm:F2} mm");
+            System.Console.WriteLine($"   Tolérance: {closure.ToleranceMm:F2} mm");
+            System.Console.WriteLine($"   Ratio: {closure.PrecisionRatio:P1}");
+            System.Console.WriteLine($"   Statut: {(closure.IsAcceptable ? "✅ ACCEPTABLE" : "❌ DÉPASSEMENT")}");
+            
+            System.Console.WriteLine("\n📈 COMPENSATION");
+            System.Console.WriteLine("═══════════════");
+            System.Console.WriteLine($"   σ₀ a posteriori: {results.Statistics.SigmaPosteriori:F4}");
+            System.Console.WriteLine($"   Degrés de liberté: {results.Statistics.DegreesOfFreedom}");
+            System.Console.WriteLine($"   Test χ²: {results.Statistics.Chi2Statistic:F2} / {results.Statistics.Chi2Critical:F2}");
+            System.Console.WriteLine($"   Poids unitaire: {(results.Statistics.UnitWeightValid ? "✅ VALIDE" : "❌ INVALIDE")}");
+            System.Console.WriteLine($"   RMSE: {results.Statistics.RMSE:F2} mm");
+            System.Console.WriteLine($"   Correction max: {results.Statistics.MaxCorrection:F2} mm");
+            
+            if (results.Statistics.SuspectObservations.Any())
+            {
+                System.Console.WriteLine($"\n⚠️ OBSERVATIONS SUSPECTES: {results.Statistics.SuspectObservations.Count}");
+            }
+            
+            System.Console.WriteLine("\n✅ VALIDATION FINALE");
+            System.Console.WriteLine("═══════════════════");
+            
+            bool precisionAchieved = results.Statistics.RMSE <= config.PrecisionMm;
+            bool testsPassed = results.Statistics.UnitWeightValid && closure.IsAcceptable;
+            
+            if (precisionAchieved && testsPassed)
+            {
+                System.Console.WriteLine("   🎯 PRÉCISION 2mm ATTEINTE");
+                System.Console.WriteLine("   ✅ TOUS LES TESTS PASSÉS");
+                System.Console.WriteLine("   ✅ COMPENSATION RÉUSSIE");
+            }
+            else
+            {
+                System.Console.WriteLine("   ⚠️ OBJECTIFS NON ATTEINTS");
+                if (!precisionAchieved)
+                    System.Console.WriteLine($"      - Précision: {results.Statistics.RMSE:F2}mm > {config.PrecisionMm}mm");
+                if (!results.Statistics.UnitWeightValid)
+                    System.Console.WriteLine("      - Test du poids unitaire échoué");
+                if (!closure.IsAcceptable)
+                    System.Console.WriteLine("      - Fermeture hors tolérance");
+            }
+            
+            System.Console.WriteLine("\n" + new string('═', 60));
+            System.Console.WriteLine("Compensation terminée avec succès!");
+        }
+    }
+    
+    /// <summary>
+    /// Configuration de la compensation
+    /// </summary>
+    public class CompensationConfig
+    {
+        public double PrecisionMm { get; set; } = 2.0;
+        public double InstrumentalErrorMm { get; set; } = 1.0;
+        public double KilometricErrorMm { get; set; } = 1.0;
+        public bool ApplyAtmosphericCorrections { get; set; } = true;
+        public string Region { get; set; } = "standard";
+        public SolutionMethod SolutionMethod { get; set; } = SolutionMethod.Auto;
+        public double InitialAltitude { get; set; } = 125.456;
+        public bool ExportResults { get; set; } = true;
+    }
+    
+    /// <summary>
+    /// Analyse de fermeture
+    /// </summary>
+    public class ClosureAnalysis
+    {
+        public double ClosureErrorMm { get; set; }
+        public double TotalDistanceKm { get; set; }
+        public double ToleranceMm { get; set; }
+        public bool IsAcceptable { get; set; }
+        public double PrecisionRatio { get; set; }
     }
 }

@@ -49,6 +49,38 @@ namespace CompensationAltimetrique.Core.Models
             }
             return true; // Si pas de données doubles, considéré cohérent
         }
+
+        /// <summary>
+        /// Calcule la dénivelation pour une session spécifique
+        /// </summary>
+        public double? CalculateDenivelation(int session)
+        {
+            if (session == 1 && AR1.HasValue && AV1.HasValue)
+                return AR1.Value - AV1.Value;
+            if (session == 2 && AR2.HasValue && AV2.HasValue)
+                return AR2.Value - AV2.Value;
+            return null;
+        }
+
+        /// <summary>
+        /// Obtient la distance moyenne entre les deux sessions
+        /// </summary>
+        public double? GetAverageDistance()
+        {
+            var distances = new List<double>();
+            if (DIST1.HasValue) distances.Add(DIST1.Value);
+            if (DIST2.HasValue) distances.Add(DIST2.Value);
+            
+            return distances.Any() ? distances.Average() : null;
+        }
+
+        /// <summary>
+        /// Vérifie si les données ont des lectures valides
+        /// </summary>
+        public bool HasValidReadings()
+        {
+            return (AR1.HasValue && AV1.HasValue) || (AR2.HasValue && AV2.HasValue);
+        }
     }
 
 }

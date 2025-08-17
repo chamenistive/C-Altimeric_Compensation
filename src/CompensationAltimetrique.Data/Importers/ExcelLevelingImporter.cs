@@ -113,7 +113,7 @@ namespace CompensationAltimetrique.Data.Importers
                          $"{item.DIST2?.ToString("F3") ?? ""}," +
                          $"{dh1?.ToString("F6") ?? ""}," +
                          $"{dh2?.ToString("F6") ?? ""}," +
-                         $"{dhMoy?.ToString("F6") ?? ""}," +
+                         $"{dhMoy.ToString("F6")}," +
                          $"{coherent}");
             }
             
