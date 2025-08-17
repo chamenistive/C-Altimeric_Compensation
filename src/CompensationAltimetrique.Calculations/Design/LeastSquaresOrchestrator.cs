@@ -7,12 +7,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using CompensationAltimetrique.Core.Models;
 using CompensationAltimetrique.Calculations.Validation;
 using CompensationAltimetrique.Calculations.Weights;
 using CompensationAltimetrique.Calculations.Corrections;
+using CompensationAltimetrique.Calculations.Algorithms;
 
 namespace CompensationAltimetrique.Calculations.Design
 {
@@ -150,6 +152,7 @@ namespace CompensationAltimetrique.Calculations.Design
         private readonly GeodeticStatisticalValidator _statisticalValidator;
         private readonly DataStructureValidator _dataStructureValidator;
         private readonly AtmosphericCorrector? _atmosphericCorrector;
+        private readonly EnhancedLeastSquaresCompensator _enhancedCompensator;
 
         public LeastSquaresOrchestrator(CompensationConfiguration configuration)
         {
@@ -178,6 +181,49 @@ namespace CompensationAltimetrique.Calculations.Design
             {
                 _atmosphericCorrector = new AtmosphericCorrector();
             }
+            
+            // Compensateur amélioré
+            _enhancedCompensator = new EnhancedLeastSquaresCompensator(
+                _configuration.TargetPrecisionMm,
+                _configuration.GeodeticParams.InstrumentalErrorMm,
+                _configuration.GeodeticParams.KilometricErrorMm);
+        }
+
+        /// <summary>
+        /// Compensation avancée utilisant le compensateur amélioré
+        /// </summary>
+        public EnhancedCompensationResults PerformEnhancedCompensation(
+            List<LevelingData> levelingData,
+            string referencePoint = "REF",
+            double referenceAltitude = 125.456,
+            SolutionMethod method = SolutionMethod.Auto)
+        {
+            Console.WriteLine($"🚀 Compensation avancée - Orchestrateur v2.0");
+            Console.WriteLine($"📋 Configuration: {levelingData.Count} observations, précision {_configuration.TargetPrecisionMm}mm");
+            
+            // ÉTAPE 1: Validation des données d'entrée
+            var dataValidation = ValidateInputData(levelingData);
+            if (!dataValidation.IsValid)
+            {
+                throw new InvalidOperationException($"Données invalides: {string.Join("; ", dataValidation.Errors)}");
+            }
+            
+            // ÉTAPE 2: Application des corrections atmosphériques si nécessaire
+            if (_configuration.ApplyAtmosphericCorrections && _atmosphericCorrector != null)
+            {
+                Console.WriteLine("🌡️ Application des corrections atmosphériques...");
+                ApplyAtmosphericCorrections(levelingData);
+            }
+            
+            // ÉTAPE 3: Compensation avec le compensateur amélioré
+            Console.WriteLine("⚙️ Compensation par moindres carrés améliorée...");
+            var enhancedResults = _enhancedCompensator.Compensate(
+                levelingData, referencePoint, referenceAltitude, method);
+            
+            Console.WriteLine($"✅ Compensation terminée");
+            Console.WriteLine($"📊 Résultats: {(enhancedResults.IsValid ? "VALIDÉS" : "AVEC ALERTES")}");
+            
+            return enhancedResults;
         }
 
         /// <summary>
@@ -569,6 +615,119 @@ namespace CompensationAltimetrique.Calculations.Design
             report.AppendLine($"🎯 Résultat: {(results.IsValid ? "✅ SUCCÈS" : "❌ ÉCHEC")}");
 
             return report.ToString();
+        }
+
+        /// <summary>
+        /// Méthode utilitaire pour créer la liste des points ajustés
+        /// </summary>
+        private List<AltitudePoint> CreateAdjustedPointsList(
+            EnhancedCompensationResults enhancedResults, 
+            List<LevelingData> levelingData, 
+            string referencePoint)
+        {
+            var adjustedPoints = new List<AltitudePoint>();
+            
+            for (int i = 0; i < enhancedResults.AdjustedAltitudes.Count; i++)
+            {
+                string pointId = (i == 0) ? referencePoint : levelingData[i - 1].Matricule;
+                double precision = (i < enhancedResults.CovarianceMatrix.GetLength(0)) 
+                    ? Math.Sqrt(enhancedResults.CovarianceMatrix[i, i]) 
+                    : 0.001;
+                
+                adjustedPoints.Add(new AltitudePoint(pointId, enhancedResults.AdjustedAltitudes[i], false)
+                {
+                    Precision = precision
+                });
+            }
+            
+            return adjustedPoints;
+        }
+        
+        /// <summary>
+        /// Validation avancée spécialisée pour les résultats du compensateur amélioré
+        /// </summary>
+        private ValidationResult PerformAdvancedValidation(
+            EnhancedCompensationResults enhancedResults, 
+            List<LevelingData> levelingData)
+        {
+            var combinedResult = new ValidationResult { IsValid = true };
+            
+            // 1. Validation de la fermeture selon T = 4√K
+            if (_configuration.NetworkConfig.NetworkType == "fermé")
+            {
+                double closureErrorMm = 0.0; // À calculer proprement
+                double totalDistanceKm = levelingData.Sum(d => (d.DIST1 ?? d.DIST2 ?? 100.0) / 1000.0);
+                var closureValidation = _precisionValidator.ValidateClosure(closureErrorMm, totalDistanceKm);
+                
+                if (!closureValidation.IsValid)
+                {
+                    foreach (var error in closureValidation.Errors)
+                        combinedResult.AddError($"Fermeture: {error}");
+                }
+                foreach (var warning in closureValidation.Warnings)
+                    combinedResult.AddWarning($"Fermeture: {warning}");
+                    
+                combinedResult.Details["closure_validation"] = closureValidation.Details;
+            }
+            
+            // 2. Validation des résidus
+            if (enhancedResults.Residuals != null && enhancedResults.Residuals.Length > 0)
+            {
+                var residualValidation = _precisionValidator.ValidateResiduals(
+                    enhancedResults.Residuals, enhancedResults.Statistics.SigmaPosteriori);
+                
+                if (!residualValidation.IsValid)
+                {
+                    foreach (var error in residualValidation.Errors)
+                        combinedResult.AddError($"Résidus: {error}");
+                }
+                foreach (var warning in residualValidation.Warnings)
+                    combinedResult.AddWarning($"Résidus: {warning}");
+                    
+                combinedResult.Details["residual_validation"] = residualValidation.Details;
+            }
+            
+            // 3. Tests statistiques intégrés du compensateur amélioré
+            var stats = enhancedResults.Statistics;
+            
+            // Test χ²
+            var chi2Validation = new ValidationResult { IsValid = stats.UnitWeightValid };
+            chi2Validation.Details["chi2_statistic"] = stats.Chi2Statistic;
+            chi2Validation.Details["chi2_critical"] = stats.Chi2Critical;
+            chi2Validation.Details["degrees_of_freedom"] = stats.DegreesOfFreedom;
+            
+            if (!stats.UnitWeightValid)
+            {
+                chi2Validation.AddError($"Test χ² échoué: {stats.Chi2Statistic:F2} > {stats.Chi2Critical:F2}");
+                chi2Validation.AddWarning("Le modèle stochastique pourrait être inadéquat");
+            }
+            
+            combinedResult.Details["chi2_validation"] = chi2Validation.Details;
+            if (!chi2Validation.IsValid)
+            {
+                foreach (var error in chi2Validation.Errors)
+                    combinedResult.AddError($"Test χ²: {error}");
+                foreach (var warning in chi2Validation.Warnings)
+                    combinedResult.AddWarning($"Test χ²: {warning}");
+            }
+            
+            // Détection de fautes grossières
+            var blunderValidation = new ValidationResult { IsValid = true };
+            blunderValidation.Details["blunder_count"] = stats.SuspectObservations.Count;
+            blunderValidation.Details["blunder_indices"] = stats.SuspectObservations;
+            blunderValidation.Details["t_critical"] = stats.BlunderDetectionThreshold;
+            blunderValidation.Details["max_normalized_residual"] = stats.MaxStandardizedResidual;
+            
+            if (stats.SuspectObservations.Count > 0)
+            {
+                blunderValidation.AddWarning($"{stats.SuspectObservations.Count} observation(s) suspecte(s) détectée(s)");
+            }
+            
+            combinedResult.Details["blunder_validation"] = blunderValidation.Details;
+            foreach (var warning in blunderValidation.Warnings)
+                combinedResult.AddWarning($"Fautes: {warning}");
+            
+            return combinedResult;
         }
 
         /// <summary>

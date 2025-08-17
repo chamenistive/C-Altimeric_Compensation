@@ -4,6 +4,71 @@
         <name>CompensationAltimetrique.Calculations</name>
     </assembly>
     <members>
+        <member name="T:CompensationAltimetrique.Calculations.Algorithms.SolutionMethod">
+            <summary>
+            Méthodes de résolution disponibles
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Algorithms.AdvancedCompensationStatistics">
+            <summary>
+            Statistiques avancées de compensation
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Algorithms.EnhancedCompensationResults">
+            <summary>
+            Résultats étendus de compensation
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator">
+            <summary>
+            Compensateur amélioré avec sélection automatique de méthode
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.Compensate(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.String,System.Double,CompensationAltimetrique.Calculations.Algorithms.SolutionMethod)">
+            <summary>
+            Compensation complète avec sélection automatique de méthode
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.BuildMatrixSystem(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.Double)">
+            <summary>
+            Construction du système matriciel A×x = f avec pondération P
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.SelectOptimalMethod(System.Double[0:,0:],System.Double[0:,0:])">
+            <summary>
+            Sélection automatique de la méthode optimale
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.SolveSystem(System.Double[0:,0:],System.Double[0:,0:],System.Double[],CompensationAltimetrique.Calculations.Algorithms.SolutionMethod)">
+            <summary>
+            Résolution du système selon la méthode choisie
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.SolveNormalEquations(System.Double[0:,0:],System.Double[0:,0:],System.Double[])">
+            <summary>
+            Résolution par équations normales (méthode classique)
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.SolveCholesky(System.Double[0:,0:],System.Double[0:,0:],System.Double[])">
+            <summary>
+            Résolution par décomposition de Cholesky
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.SolveQR(System.Double[0:,0:],System.Double[0:,0:],System.Double[])">
+            <summary>
+            Résolution par décomposition QR (plus stable numériquement)
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.CalculateStatistics(System.Double[0:,0:],System.Double[0:,0:],System.Double[],System.Double[],System.Double[0:,0:],System.Double[],CompensationAltimetrique.Calculations.Algorithms.SolutionMethod)">
+            <summary>
+            Calcul des statistiques de compensation
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Algorithms.EnhancedLeastSquaresCompensator.CalculateNormalizedResiduals(System.Double[],System.Double[0:,0:],System.Double[0:,0:],System.Double[0:,0:],System.Double)">
+            <summary>
+            Calcul des résidus normalisés
+            </summary>
+        </member>
         <member name="T:CompensationAltimetrique.Calculations.Algorithms.LeastSquaresCompensator">
             <summary>
             Compensateur par moindres carrés pour données de nivellement
@@ -321,6 +386,11 @@
             - Contrôle qualité
             </summary>
         </member>
+        <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.PerformEnhancedCompensation(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.String,System.Double,CompensationAltimetrique.Calculations.Algorithms.SolutionMethod)">
+            <summary>
+            Compensation avancée utilisant le compensateur amélioré
+            </summary>
+        </member>
         <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.CompensateNetwork(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData})">
             <summary>
             Compensation complète par moindres carrés avec validation.
@@ -339,6 +409,16 @@
         <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.GenerateDetailedReport(CompensationAltimetrique.Calculations.Design.DetailedCompensationResults)">
             <summary>
             Génération d'un rapport détaillé de compensation.
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.CreateAdjustedPointsList(CompensationAltimetrique.Calculations.Algorithms.EnhancedCompensationResults,System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.String)">
+            <summary>
+            Méthode utilitaire pour créer la liste des points ajustés
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.PerformAdvancedValidation(CompensationAltimetrique.Calculations.Algorithms.EnhancedCompensationResults,System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData})">
+            <summary>
+            Validation avancée spécialisée pour les résultats du compensateur amélioré
             </summary>
         </member>
         <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.PerformAdvancedValidation(CompensationAltimetrique.Calculations.Design.DetailedCompensationResults,System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData})">
