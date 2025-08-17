@@ -34,15 +34,170 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card bg-success text-white">
-                                    <div class="card-body">
-                                        <h6 class="card-title">✅ Validation</h6>
-                                        <ul class="list-unstyled">
-                                            <li><i class="bi bi-check-circle"></i> Compensation terminée avec succès</li>
-                                            <li><i class="bi bi-check-circle"></i> Précision respectée</li>
-                                            <li><i class="bi bi-check-circle"></i> Résultats cohérents</li>
-                                            <li><i class="bi bi-check-circle"></i> Prêt pour export</li>
-                                        </ul>
+                                @if (CompensationSvc.Results?.IsValid == true)
+                                {
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body">
+                                            <h6 class="card-title">✅ Validation Réussie</h6>
+                                            <ul class="list-unstyled">
+                                                <li><i class="bi bi-check-circle"></i> Compensation terminée avec succès</li>
+                                                @if (CompensationSvc.Results.PrecisionAchieved)
+                                                {
+                                                    <li><i class="bi bi-check-circle"></i> Précision respectée</li>
+                                                }
+                                                else
+                                                {
+                                                    <li><i class="bi bi-exclamation-triangle"></i> Précision non atteinte</li>
+                                                }
+                                                <li><i class="bi bi-check-circle"></i> Tests statistiques validés</li>
+                                                <li><i class="bi bi-check-circle"></i> Prêt pour export</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="card bg-warning text-dark">
+                                        <div class="card-body">
+                                            <h6 class="card-title">⚠️ Validation avec Alertes</h6>
+                                            <p class="small mb-2">Certains critères de validation ne sont pas respectés.</p>
+                                            @if (ValidationErrors?.Any() == true)
+                                            {
+                                                <ul class="list-unstyled small">
+                                                    @foreach (var error in ValidationErrors.Take(3))
+                                                    {
+                                                        <li><i class="bi bi-exclamation-triangle"></i> @error</li>
+                                                    }
+                                                    @if (ValidationErrors.Count > 3)
+                                                    {
+                                                        <li class="text-muted">... et @(ValidationErrors.Count - 3) autres problèmes</li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @* Section Détails de Validation *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-clipboard-check"></i> Détails de Validation Géodésique
+                                            <button class="btn btn-sm btn-outline-primary float-end" type="button" 
+                                                    data-bs-toggle="collapse" data-bs-target="#validationDetails">
+                                                <i class="bi bi-chevron-down"></i> Afficher les détails
+                                            </button>
+                                        </h6>
+                                    </div>
+                                    <div class="collapse" id="validationDetails">
+                                        <div class="card-body">
+                                            @if (ValidationDetails != null)
+                                            {
+                                                <div class="row">
+                                                    @* Validation de fermeture *@
+                                                    @if (ValidationDetails.TryGetValue("closure_validation", out var closureData))
+                                                    {
+                                                        <div class="col-md-4">
+                                                            <h6><i class="bi bi-arrow-repeat"></i> Fermeture (T = 4√K)</h6>
+                                                            @if (closureData is Dictionary<string, object> closure)
+                                                            {
+                                                                <ul class="list-unstyled small">
+                                                                    @if (closure.TryGetValue("tolerance_mm", out var tolerance))
+                                                                    {
+                                                                        <li><strong>Tolérance :</strong> @(((double)tolerance).ToString("F1")) mm</li>
+                                                                    }
+                                                                    @if (closure.TryGetValue("closure_error_mm", out var error))
+                                                                    {
+                                                                        <li><strong>Erreur :</strong> @(((double)error).ToString("F1")) mm</li>
+                                                                    }
+                                                                    @if (closure.TryGetValue("precision_ratio", out var ratio))
+                                                                    {
+                                                                        <li><strong>Ratio :</strong> @(((double)ratio).ToString("F2"))</li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    
+                                                    @* Validation des résidus *@
+                                                    @if (ValidationDetails.TryGetValue("residual_validation", out var residualData))
+                                                    {
+                                                        <div class="col-md-4">
+                                                            <h6><i class="bi bi-graph-up"></i> Résidus</h6>
+                                                            @if (residualData is Dictionary<string, object> residual)
+                                                            {
+                                                                <ul class="list-unstyled small">
+                                                                    @if (residual.TryGetValue("max_residual_mm", out var maxRes))
+                                                                    {
+                                                                        <li><strong>Résidu max :</strong> @(((double)maxRes).ToString("F2")) mm</li>
+                                                                    }
+                                                                    @if (residual.TryGetValue("rms_residual_mm", out var rmsRes))
+                                                                    {
+                                                                        <li><strong>RMS :</strong> @(((double)rmsRes).ToString("F2")) mm</li>
+                                                                    }
+                                                                    @if (residual.TryGetValue("sigma_posteriori", out var sigma))
+                                                                    {
+                                                                        <li><strong>σ₀ :</strong> @(((double)sigma).ToString("F3"))</li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    
+                                                    @* Tests statistiques *@
+                                                    @if (ValidationDetails.TryGetValue("chi2_validation", out var chi2Data))
+                                                    {
+                                                        <div class="col-md-4">
+                                                            <h6><i class="bi bi-calculator"></i> Tests Statistiques</h6>
+                                                            @if (chi2Data is Dictionary<string, object> chi2)
+                                                            {
+                                                                <ul class="list-unstyled small">
+                                                                    @if (chi2.TryGetValue("chi2_statistic", out var stat))
+                                                                    {
+                                                                        <li><strong>χ² calculé :</strong> @(((double)stat).ToString("F2"))</li>
+                                                                    }
+                                                                    @if (chi2.TryGetValue("chi2_critical", out var crit))
+                                                                    {
+                                                                        <li><strong>χ² critique :</strong> @(((double)crit).ToString("F2"))</li>
+                                                                    }
+                                                                    @if (chi2.TryGetValue("degrees_of_freedom", out var df))
+                                                                    {
+                                                                        <li><strong>DDL :</strong> @df</li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                                
+                                                @* Détection de fautes grossières *@
+                                                @if (ValidationDetails.TryGetValue("blunder_validation", out var blunderData))
+                                                {
+                                                    @if (blunderData is Dictionary<string, object> blunder)
+                                                    {
+                                                        @if (blunder.TryGetValue("blunder_count", out var count) && (int)count > 0)
+                                                        {
+                                                            <div class="row mt-3">
+                                                                <div class="col-12">
+                                                                    <div class="alert alert-warning">
+                                                                        <h6><i class="bi bi-exclamation-triangle"></i> Observations Suspectes Détectées</h6>
+                                                                        <p><strong>@count observation(s)</strong> présente(nt) des résidus normalisés élevés.</p>
+                                                                        @if (blunder.TryGetValue("blunder_indices", out var indices))
+                                                                        {
+                                                                            <p class="small mb-0">Indices : @string.Join(", ", (List<int>)indices)</p>
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -111,3 +266,9 @@
         </div>
     </div>
 </div>
+
+@code {
+    private Dictionary<string, object>? ValidationDetails => CompensationSvc.Results?.ValidationResult?.Details;
+    private List<string>? ValidationErrors => CompensationSvc.Results?.ValidationResult?.Errors;
+    private List<string>? ValidationWarnings => CompensationSvc.Results?.ValidationResult?.Warnings;
+}

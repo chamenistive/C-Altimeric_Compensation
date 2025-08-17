@@ -146,6 +146,9 @@ namespace CompensationAltimetrique.Calculations.Design
         private readonly WeightCalculator _weightCalculator;
         private readonly QualityAnalyzer _qualityAnalyzer;
         private readonly CompensationValidator _validator;
+        private readonly GeodeticPrecisionValidator _precisionValidator;
+        private readonly GeodeticStatisticalValidator _statisticalValidator;
+        private readonly DataStructureValidator _dataStructureValidator;
         private readonly AtmosphericCorrector? _atmosphericCorrector;
 
         public LeastSquaresOrchestrator(CompensationConfiguration configuration)
@@ -164,6 +167,11 @@ namespace CompensationAltimetrique.Calculations.Design
             _weightCalculator = new WeightCalculator(_configuration.GeodeticParams);
             _qualityAnalyzer = new QualityAnalyzer(_configuration.ConfidenceLevel);
             _validator = new CompensationValidator(_configuration.TargetPrecisionMm, _configuration.ConfidenceLevel);
+            
+            // Nouveaux validateurs géodésiques
+            _precisionValidator = new GeodeticPrecisionValidator(_configuration.TargetPrecisionMm);
+            _statisticalValidator = new GeodeticStatisticalValidator(_configuration.ConfidenceLevel);
+            _dataStructureValidator = new DataStructureValidator();
 
             // Correcteur atmosphérique si nécessaire
             if (_configuration.ApplyAtmosphericCorrections)
@@ -251,11 +259,15 @@ namespace CompensationAltimetrique.Calculations.Design
                 results.Statistics = _qualityAnalyzer.AnalyzeCompensation(
                     designMatrix, weightMatrix, misclosures, results.Corrections, results.CovarianceMatrix);
                 
-                // ÉTAPE 9: Validation finale
-                results.ValidationResult = _validator.ValidateCompensation(
-                    results.Residuals, results.Corrections, results.Statistics,
-                    results.ClosureError, results.TotalDistance, 
-                    levelingData.Select(d => d.DIST1 ?? d.DIST2 ?? 50.0));
+                // ÉTAPE 9: Validation géodésique avancée
+                var advancedValidation = PerformAdvancedValidation(results, levelingData);
+                results.ValidationResult = CombineValidationResults(
+                    results.ValidationResult, 
+                    advancedValidation,
+                    _validator.ValidateCompensation(
+                        results.Residuals, results.Corrections, results.Statistics,
+                        results.ClosureError, results.TotalDistance, 
+                        levelingData.Select(d => d.DIST1 ?? d.DIST2 ?? 50.0)));
 
                 // ÉTAPE 10: Résultats finaux
                 results.IsValid = results.ValidationResult.IsValid;
@@ -301,12 +313,74 @@ namespace CompensationAltimetrique.Calculations.Design
                 return result;
             }
 
-            // Validation cohérence des données
+            // Validation avec les nouveaux validateurs
             int validObservations = 0;
+            var dataErrors = new List<string>();
+            
             foreach (var data in levelingData)
             {
-                if (data.CalculateAverageDenivelation() != 0)
-                    validObservations++;
+                // Validation des lectures AR/AV
+                if (data.AR1.HasValue && data.AV1.HasValue)
+                {
+                    var readingValidation = _dataStructureValidator.ValidateReadings(
+                        data.AR1.Value, data.AV1.Value, data.Matricule);
+                    
+                    if (!readingValidation.IsValid)
+                    {
+                        dataErrors.AddRange(readingValidation.Errors);
+                    }
+                    else
+                    {
+                        validObservations++;
+                    }
+                }
+                
+                if (data.AR2.HasValue && data.AV2.HasValue)
+                {
+                    var readingValidation = _dataStructureValidator.ValidateReadings(
+                        data.AR2.Value, data.AV2.Value, data.Matricule);
+                    
+                    if (!readingValidation.IsValid)
+                    {
+                        dataErrors.AddRange(readingValidation.Errors);
+                    }
+                    else
+                    {
+                        validObservations++;
+                    }
+                }
+                
+                // Validation du contrôle instrumental si applicable
+                if (data.AR1.HasValue && data.AV1.HasValue && data.AR2.HasValue && data.AV2.HasValue)
+                {
+                    var denivelations = new List<double>
+                    {
+                        data.AR1.Value - data.AV1.Value,
+                        data.AR2.Value - data.AV2.Value
+                    };
+                    
+                    var controlValidation = _precisionValidator.ValidateInstrumentalControl(denivelations);
+                    
+                    if (!controlValidation.IsValid)
+                    {
+                        dataErrors.AddRange(controlValidation.Errors);
+                    }
+                    if (controlValidation.Warnings.Any())
+                    {
+                        result.Warnings.AddRange(controlValidation.Warnings);
+                    }
+                }
+            }
+
+            // Ajouter les erreurs de données
+            foreach (var error in dataErrors.Take(10)) // Limiter à 10 erreurs pour l'affichage
+            {
+                result.AddError(error);
+            }
+            
+            if (dataErrors.Count > 10)
+            {
+                result.AddWarning($"{dataErrors.Count - 10} erreurs supplémentaires détectées");
             }
 
             if (validObservations == 0)
@@ -320,6 +394,7 @@ namespace CompensationAltimetrique.Calculations.Design
 
             result.Details["total_data"] = levelingData.Count;
             result.Details["valid_observations"] = validObservations;
+            result.Details["data_errors_count"] = dataErrors.Count;
 
             return result;
         }
@@ -494,6 +569,111 @@ namespace CompensationAltimetrique.Calculations.Design
             report.AppendLine($"🎯 Résultat: {(results.IsValid ? "✅ SUCCÈS" : "❌ ÉCHEC")}");
 
             return report.ToString();
+        }
+
+        /// <summary>
+        /// Validation géodésique avancée avec les nouveaux validateurs
+        /// </summary>
+        private ValidationResult PerformAdvancedValidation(DetailedCompensationResults results, List<LevelingData> levelingData)
+        {
+            var combinedResult = new ValidationResult { IsValid = true };
+            
+            // 1. Validation de la fermeture selon T = 4√K
+            if (_configuration.NetworkConfig.NetworkType == "fermé" && results.ClosureError > 0)
+            {
+                double closureErrorMm = results.ClosureError * 1000;
+                var closureValidation = _precisionValidator.ValidateClosure(closureErrorMm, results.TotalDistance);
+                
+                if (!closureValidation.IsValid)
+                {
+                    foreach (var error in closureValidation.Errors)
+                        combinedResult.AddError($"Fermeture: {error}");
+                }
+                foreach (var warning in closureValidation.Warnings)
+                    combinedResult.AddWarning($"Fermeture: {warning}");
+                    
+                combinedResult.Details["closure_validation"] = closureValidation.Details;
+            }
+            
+            // 2. Validation des résidus
+            if (results.Residuals != null && results.Residuals.Count > 0)
+            {
+                var residualsArray = results.Residuals.ToArray();
+                var residualValidation = _precisionValidator.ValidateResiduals(residualsArray, results.Statistics.Sigma0Hat);
+                
+                if (!residualValidation.IsValid)
+                {
+                    foreach (var error in residualValidation.Errors)
+                        combinedResult.AddError($"Résidus: {error}");
+                }
+                foreach (var warning in residualValidation.Warnings)
+                    combinedResult.AddWarning($"Résidus: {warning}");
+                    
+                combinedResult.Details["residual_validation"] = residualValidation.Details;
+            }
+            
+            // 3. Tests statistiques avancés
+            if (results.Statistics != null && results.Residuals != null && results.Residuals.Count > 0)
+            {
+                int degreesOfFreedom = results.Residuals.Count - results.AdjustedPoints.Count + 1;
+                
+                // Test χ² pour validation du poids unitaire
+                double vtPv = results.Residuals.DotProduct(results.Residuals);
+                var chi2Validation = _statisticalValidator.ValidateUnitWeight(vtPv, degreesOfFreedom);
+                
+                if (!chi2Validation.IsValid)
+                {
+                    foreach (var error in chi2Validation.Errors)
+                        combinedResult.AddError($"Test χ²: {error}");
+                }
+                foreach (var warning in chi2Validation.Warnings)
+                    combinedResult.AddWarning($"Test χ²: {warning}");
+                    
+                combinedResult.Details["chi2_validation"] = chi2Validation.Details;
+                
+                // Détection de fautes grossières
+                var normalizedResiduals = results.Residuals.ToArray();
+                for (int i = 0; i < normalizedResiduals.Length; i++)
+                {
+                    normalizedResiduals[i] /= results.Statistics.Sigma0Hat;
+                }
+                
+                var blunderValidation = _statisticalValidator.DetectBlunders(normalizedResiduals, degreesOfFreedom);
+                
+                if (blunderValidation.Warnings.Any())
+                {
+                    foreach (var warning in blunderValidation.Warnings)
+                        combinedResult.AddWarning($"Fautes: {warning}");
+                }
+                
+                combinedResult.Details["blunder_validation"] = blunderValidation.Details;
+            }
+            
+            return combinedResult;
+        }
+        
+        /// <summary>
+        /// Combine plusieurs résultats de validation
+        /// </summary>
+        private ValidationResult CombineValidationResults(params ValidationResult[] results)
+        {
+            var combined = new ValidationResult { IsValid = true };
+            
+            foreach (var result in results)
+            {
+                if (!result.IsValid)
+                    combined.IsValid = false;
+                    
+                combined.Errors.AddRange(result.Errors);
+                combined.Warnings.AddRange(result.Warnings);
+                
+                foreach (var detail in result.Details)
+                {
+                    combined.Details[detail.Key] = detail.Value;
+                }
+            }
+            
+            return combined;
         }
     }
 }

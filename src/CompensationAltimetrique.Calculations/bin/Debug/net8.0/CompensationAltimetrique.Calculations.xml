@@ -341,6 +341,87 @@
             Génération d'un rapport détaillé de compensation.
             </summary>
         </member>
+        <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.PerformAdvancedValidation(CompensationAltimetrique.Calculations.Design.DetailedCompensationResults,System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData})">
+            <summary>
+            Validation géodésique avancée avec les nouveaux validateurs
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Design.LeastSquaresOrchestrator.CombineValidationResults(CompensationAltimetrique.Calculations.Validation.ValidationResult[])">
+            <summary>
+            Combine plusieurs résultats de validation
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.GeodeticPrecisionValidator">
+            <summary>
+            Validateur de précision selon normes géodésiques
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticPrecisionValidator.CalculateClosureTolerance(System.Double)">
+            <summary>
+            Calcul de la tolérance de fermeture
+            T = 4√K (mm) où K est la distance totale en km
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticPrecisionValidator.ValidateClosure(System.Double,System.Double)">
+            <summary>
+            Validation de la fermeture d'un cheminement
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticPrecisionValidator.ValidateInstrumentalControl(System.Collections.Generic.List{System.Double})">
+            <summary>
+            Validation des dénivelées entre instruments
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticPrecisionValidator.ValidateResiduals(System.Double[],System.Double)">
+            <summary>
+            Validation des résidus après compensation
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.GeodeticStatisticalValidator">
+            <summary>
+            Validateur statistique pour compensation
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticStatisticalValidator.ValidateUnitWeight(System.Double,System.Int32)">
+            <summary>
+            Test du χ² pour validation du poids unitaire
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticStatisticalValidator.DetectBlunders(System.Double[],System.Int32)">
+            <summary>
+            Détection des fautes grossières (test de Student)
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticStatisticalValidator.CalculateChi2Critical(System.Int32,System.Double)">
+            <summary>
+            Calcul approximatif de la valeur critique du χ²
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticStatisticalValidator.CalculateTCritical(System.Int32,System.Double)">
+            <summary>
+            Calcul approximatif de la valeur critique de Student
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.GeodeticStatisticalValidator.GetZScore(System.Double)">
+            <summary>
+            Score Z pour niveau de confiance
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.DataStructureValidator">
+            <summary>
+            Validateur de structure de données
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.DataStructureValidator.ValidateColumns(System.Collections.Generic.List{System.String},System.Collections.Generic.List{System.String})">
+            <summary>
+            Validation des colonnes AR/AV
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.DataStructureValidator.ValidateReadings(System.Double,System.Double,System.String)">
+            <summary>
+            Validation des valeurs de lectures
+            </summary>
+        </member>
         <member name="T:CompensationAltimetrique.Calculations.Validation.ValidationResult">
             <summary>
             Résultat de validation avec détails.
