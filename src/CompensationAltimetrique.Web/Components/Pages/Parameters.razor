@@ -24,8 +24,9 @@
                             <i class="bi bi-exclamation-triangle"></i>
                             Aucune donnée importée. Veuillez d'abord <a href="/import">importer des données</a>.
                         </div>
-                        return;
                     }
+                    else
+                    {
 
                     <EditForm Model="parameters" OnValidSubmit="SaveConfiguration">
                         <DataAnnotationsValidator />
@@ -172,6 +173,18 @@
                                     @if (parameters.ApplyAtmosphericCorrections)
                                     {
                                         <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-12">
+                                                    <label class="form-label">Région prédéfinie</label>
+                                                    <select class="form-select" @onchange="OnRegionChanged">
+                                                        <option value="">-- Conditions personnalisées --</option>
+                                                        <option value="france">France/Europe (15°C, 1013hPa, 65%)</option>
+                                                        <option value="sahel">Sahel/Afrique (32°C, 1008hPa, 40%)</option>
+                                                        <option value="tropical">Tropical (28°C, 1010hPa, 75%)</option>
+                                                    </select>
+                                                    <div class="form-text">Sélectionnez une région pour charger les conditions atmosphériques typiques</div>
+                                                </div>
+                                            </div>
                                             <div class="row">
                                                 <div class="col-md-4">
                                                     <div class="mb-3">
@@ -261,6 +274,7 @@
                         </div>
 
                     </EditForm>
+                    }
 
                 </div>
             </div>
@@ -332,6 +346,33 @@
                parameters.InstrumentalErrorMm > 0 &&
                parameters.KilometricErrorMm > 0 &&
                parameters.ConfidenceLevel > 0.8 && parameters.ConfidenceLevel < 1.0;
+    }
+
+    private void OnRegionChanged(ChangeEventArgs e)
+    {
+        var region = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(region))
+        {
+            switch (region.ToLower())
+            {
+                case "france":
+                    parameters.TemperatureCelsius = 15.0;
+                    parameters.PressureHPa = 1013.25;
+                    parameters.HumidityPercent = 65.0;
+                    break;
+                case "sahel":
+                    parameters.TemperatureCelsius = 32.0;
+                    parameters.PressureHPa = 1008.0;
+                    parameters.HumidityPercent = 40.0;
+                    break;
+                case "tropical":
+                    parameters.TemperatureCelsius = 28.0;
+                    parameters.PressureHPa = 1010.0;
+                    parameters.HumidityPercent = 75.0;
+                    break;
+            }
+            StateHasChanged();
+        }
     }
 
     private async Task SaveConfiguration()

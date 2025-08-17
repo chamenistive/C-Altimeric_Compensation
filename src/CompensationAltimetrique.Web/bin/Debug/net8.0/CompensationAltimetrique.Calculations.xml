@@ -46,49 +46,61 @@
         </member>
         <member name="T:CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions">
             <summary>
-            Conditions atmosphériques pour calcul de réfraction.
-            Transposition exacte de la dataclass AtmosphericConditions Python.
-            
-            Formules appliquées:
-            - Correction courbure: C₁ = k × d² / (2R)  
-            - Correction réfraction: C₂ = -r × d² / (2R)
-            - Correction niveau apparent: n.a = (1-m.r.a) × Dh²/(2×Rn)
+            Conditions atmosphériques pour le calcul des corrections
             </summary>
         </member>
-        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions.CalculateRefractionCoefficient">
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions.CreateForRegion(System.String)">
             <summary>
-            Calcule le coefficient de réfraction selon conditions atmosphériques.
-            TRANSPOSITION EXACTE de la méthode Python.
-            </summary>
-        </member>
-        <member name="T:CompensationAltimetrique.Calculations.Corrections.RefractionCorrection">
-            <summary>
-            Résultat d'une correction de réfraction - Équivalent Python RefractionCorrection
+            Créer des conditions standards pour une région
             </summary>
         </member>
         <member name="T:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector">
             <summary>
-            Calculateur de corrections atmosphériques - Transposition AtmosphericCorrector Python
+            Correcteur atmosphérique pour nivellement géométrique
+            Applique les corrections de courbure terrestre et réfraction atmosphérique
             </summary>
         </member>
-        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateLevelApparentCorrection(System.Double,System.Double,System.Double)">
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateRefractionCoefficient">
             <summary>
-            Calcul de la correction de niveau apparent - Nouvelle formule Python
+            Calcul du coefficient de réfraction variable selon conditions
             </summary>
         </member>
-        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateAtmosphericCorrection(System.Double,System.Double,CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions)">
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateEarthCurvatureCorrection(System.Double)">
             <summary>
-            Calcul complet des corrections atmosphériques - Méthode principale Python
+            Correction de courbure terrestre (toujours positive)
+            C₁ = d² / (2R)
             </summary>
         </member>
-        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.ApplyCorrections(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions)">
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateRefractionCorrection(System.Double)">
             <summary>
-            Application des corrections à des données de nivellement - Adaptation Python
+            Correction de réfraction atmosphérique (toujours négative)
+            C₂ = -r × d² / (2R)
             </summary>
         </member>
-        <member name="T:CompensationAltimetrique.Calculations.Corrections.AtmosphericConditionsFactory">
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.CalculateTotalCorrection(System.Double)">
             <summary>
-            Factory pour conditions atmosphériques - Équivalent create_standard_conditions Python
+            Correction totale atmosphérique
+            C_total = C₁ + C₂ = (1 - r) × d² / (2R)
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.ApplyCorrectionToDenivelation(System.Double,System.Double)">
+            <summary>
+            Appliquer les corrections à une dénivelée
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.ApplyCorrectionsToMultiple(System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double})">
+            <summary>
+            Appliquer les corrections à un ensemble de dénivelées
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Corrections.AtmosphericCorrector.GenerateReport(System.Double)">
+            <summary>
+            Rapport détaillé des corrections
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Corrections.CorrectionReport">
+            <summary>
+            Rapport de correction atmosphérique
             </summary>
         </member>
         <member name="T:CompensationAltimetrique.Calculations.Design.ConstraintType">

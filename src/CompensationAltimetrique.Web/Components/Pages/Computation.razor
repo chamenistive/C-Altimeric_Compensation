@@ -27,8 +27,9 @@
                             <i class="bi bi-exclamation-triangle"></i>
                             Configuration incomplète. Veuillez d'abord <a href="/parameters">configurer les paramètres</a>.
                         </div>
-                        return;
                     }
+                    else
+                    {
 
                     @* Section de lancement *@
                     @if (CompensationSvc.CurrentState != CompensationState.Computing && 
@@ -240,6 +241,7 @@
                             </button>
                         }
                     </div>
+                    }
 
                 </div>
             </div>

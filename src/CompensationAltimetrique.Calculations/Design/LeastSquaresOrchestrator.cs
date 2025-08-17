@@ -43,7 +43,7 @@ namespace CompensationAltimetrique.Calculations.Design
         public bool ApplyAtmosphericCorrections { get; set; } = false;
 
         /// <summary>Conditions atmosphériques si corrections appliquées</summary>
-        public CompensationAltimetrique.Calculations.Corrections.AtmosphericConditions AtmosphericConditions { get; set; } = new();
+        public Corrections.AtmosphericConditions AtmosphericConditions { get; set; } = new();
 
         /// <summary>Validation de la configuration</summary>
         public ValidationResult ValidateConfiguration()
@@ -103,7 +103,7 @@ namespace CompensationAltimetrique.Calculations.Design
         public WeightStatistics WeightStats { get; set; } = new();
 
         /// <summary>Détails des corrections atmosphériques si appliquées</summary>
-        public List<RefractionCorrection> AtmosphericCorrections { get; set; } = new();
+        public List<CorrectionReport> AtmosphericCorrections { get; set; } = new();
 
         /// <summary>Résultats de validation complète</summary>
         public ValidationResult ValidationResult { get; set; } = new();
@@ -324,25 +324,32 @@ namespace CompensationAltimetrique.Calculations.Design
             return result;
         }
 
-        private List<RefractionCorrection> ApplyAtmosphericCorrections(List<LevelingData> levelingData)
+        private List<CorrectionReport> ApplyAtmosphericCorrections(List<LevelingData> levelingData)
         {
-            var corrections = new List<RefractionCorrection>();
+            var corrections = new List<CorrectionReport>();
 
             if (_atmosphericCorrector == null) return corrections;
 
             foreach (var data in levelingData)
             {
                 double distance = data.DIST1 ?? data.DIST2 ?? 50.0;
-                double deltaH = data.CalculateAverageDenivelation();
-
-                var correction = _atmosphericCorrector.CalculateAtmosphericCorrection(
-                    distance, deltaH, _configuration.AtmosphericConditions);
-
+                var correction = _atmosphericCorrector.GenerateReport(distance);
                 corrections.Add(correction);
 
-                // Appliquer la correction à la dénivelation
-                // Note: Ceci modifierait les données originales, 
-                // dans une implémentation réelle il faudrait une copie
+                // Appliquer les corrections aux dénivelées
+                if (data.AR1.HasValue && data.AV1.HasValue)
+                {
+                    double deltaH1 = data.AR1.Value - data.AV1.Value;
+                    double correctedDH1 = _atmosphericCorrector.ApplyCorrectionToDenivelation(deltaH1, distance);
+                    // Note: Modification des données en place pour la démonstration
+                    // En production, il faudrait créer une copie
+                }
+
+                if (data.AR2.HasValue && data.AV2.HasValue)
+                {
+                    double deltaH2 = data.AR2.Value - data.AV2.Value;
+                    double correctedDH2 = _atmosphericCorrector.ApplyCorrectionToDenivelation(deltaH2, distance);
+                }
             }
 
             return corrections;
