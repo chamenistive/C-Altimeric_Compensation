@@ -431,6 +431,96 @@
             Combine plusieurs résultats de validation
             </summary>
         </member>
+        <member name="T:CompensationAltimetrique.Calculations.DetailedCompensationResults">
+            <summary>
+            Résultats de compensation avec validation statistique complète
+            Extension de CompensationResults
+            </summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.DetailedCompensationResults.Statistics">
+            <summary>
+            Statistiques de compensation (χ², σ₀, etc.)
+            </summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.DetailedCompensationResults.SuspectObservations">
+            <summary>
+            Observations suspectes détectées
+            </summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.DetailedCompensationResults.ValidationSummary">
+            <summary>
+            Résumé de validation complet
+            </summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.DetailedCompensationResults.QualityGrade">
+            <summary>
+            Grade de qualité du nivellement
+            </summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.DetailedCompensationResults.Recommendations">
+            <summary>
+            Recommandations d'amélioration
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.DetailedCompensationResults.GetExecutiveSummary">
+            <summary>
+            Génère un résumé exécutif
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.QualityGrade">
+            <summary>
+            Grade de qualité du nivellement
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.MatrixSystemForAnalysis">
+            <summary>
+            Système matriciel pour analyse
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.EnhancedCompensator">
+            <summary>
+            Compensateur avec validation statistique complète
+            Extension de LeastSquaresCompensator existant
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.EnhancedCompensator.CompensateWithFullValidation(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.Double)">
+            <summary>
+            Compensation avec validation statistique complète
+            Adaptation pour les données de nivellement
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.EnhancedLevelingCalculator">
+            <summary>
+            Calculateur de nivellement avec corrections atmosphériques intégrées
+            Extension de LevelingCalculator existant
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.EnhancedLevelingCalculator.Calculate(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.Double)">
+            <summary>
+            Calcul complet avec corrections atmosphériques
+            Surcharge la méthode Calculate de base
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.AtmosphericCorrectionResult">
+            <summary>
+            Résultat d'une correction atmosphérique
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.SimpleAtmosphericCorrector">
+            <summary>
+            Correcteur atmosphérique simplifié pour intégration
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.LevelingCalculator">
+            <summary>
+            Calculateur de base pour nivellement géométrique
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.LevelingCalculator.Calculate(System.Collections.Generic.List{CompensationAltimetrique.Core.Models.LevelingData},System.Double)">
+            <summary>
+            Calcul de base des altitudes par nivellement simple
+            </summary>
+        </member>
         <member name="T:CompensationAltimetrique.Calculations.Validation.GeodeticPrecisionValidator">
             <summary>
             Validateur de précision selon normes géodésiques
@@ -622,6 +712,26 @@
             <summary>
             Validation complète de la compensation.
             Intègre tous les contrôles Python.
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.ValidationSummary">
+            <summary>
+            Résumé de validation complet
+            </summary>
+        </member>
+        <member name="P:CompensationAltimetrique.Calculations.Validation.ValidationSummary.IsFullyValid">
+            <summary>
+            Validation globale réussie
+            </summary>
+        </member>
+        <member name="M:CompensationAltimetrique.Calculations.Validation.ValidationSummary.GetExecutiveSummary">
+            <summary>
+            Résumé exécutif de validation
+            </summary>
+        </member>
+        <member name="T:CompensationAltimetrique.Calculations.Validation.ValidationTestResult">
+            <summary>
+            Résultat d'un test de validation
             </summary>
         </member>
         <member name="T:CompensationAltimetrique.Calculations.Weights.GeodeticParameters">

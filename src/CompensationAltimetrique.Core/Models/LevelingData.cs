@@ -81,6 +81,16 @@ namespace CompensationAltimetrique.Core.Models
         {
             return (AR1.HasValue && AV1.HasValue) || (AR2.HasValue && AV2.HasValue);
         }
+
+        /// <summary>
+        /// Indique si ce point a des données de distance
+        /// </summary>
+        public bool HasDistances => DIST1.HasValue || DIST2.HasValue;
+
+        /// <summary>
+        /// Corrections atmosphériques appliquées (métadonnées)
+        /// </summary>
+        public List<string> AppliedCorrections { get; set; } = new List<string>();
     }
 
 }
