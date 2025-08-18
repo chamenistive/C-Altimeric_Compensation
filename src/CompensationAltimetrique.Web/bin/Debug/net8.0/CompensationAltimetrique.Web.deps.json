@@ -10,6 +10,7 @@
         "dependencies": {
           "CompensationAltimetrique.Calculations": "1.0.0",
           "CompensationAltimetrique.Core": "1.0.0",
+          "CompensationAltimetrique.Data": "1.0.0",
           "EPPlus": "6.2.2"
         },
         "runtime": {
@@ -183,6 +184,18 @@
             "fileVersion": "1.0.0.0"
           }
         }
+      },
+      "CompensationAltimetrique.Data/1.0.0": {
+        "dependencies": {
+          "CompensationAltimetrique.Core": "1.0.0",
+          "EPPlus": "6.2.2"
+        },
+        "runtime": {
+          "CompensationAltimetrique.Data.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -345,6 +358,11 @@
       "sha512": ""
     },
     "CompensationAltimetrique.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CompensationAltimetrique.Data/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

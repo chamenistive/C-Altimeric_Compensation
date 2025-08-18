@@ -316,6 +316,12 @@ namespace CompensationAltimetrique.Calculations.Design
                         levelingData.Select(d => d.DIST1 ?? d.DIST2 ?? 50.0)));
 
                 // ÉTAPE 10: Résultats finaux
+                Console.WriteLine($"🔍 ValidationResult.IsValid = {results.ValidationResult.IsValid}");
+                Console.WriteLine($"🔍 ValidationResult.Errors.Count = {results.ValidationResult.Errors.Count}");
+                if (results.ValidationResult.Errors.Any())
+                {
+                    Console.WriteLine($"🔍 ValidationResult.Errors: {string.Join(", ", results.ValidationResult.Errors)}");
+                }
                 results.IsValid = results.ValidationResult.IsValid;
                 if (results.ValidationResult.Details.TryGetValue("adjustment_validation", out var adjustmentData) &&
                     adjustmentData is Dictionary<string, object> adjDict &&

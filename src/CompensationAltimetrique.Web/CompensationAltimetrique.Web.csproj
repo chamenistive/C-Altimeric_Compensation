@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="../CompensationAltimetrique.Core/CompensationAltimetrique.Core.csproj" />
     <ProjectReference Include="../CompensationAltimetrique.Calculations/CompensationAltimetrique.Calculations.csproj" />
+    <ProjectReference Include="../CompensationAltimetrique.Data/CompensationAltimetrique.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

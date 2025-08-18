@@ -1,0 +1,53 @@
+ 2. Configuration des Paramètres
+ Points de Référence
+Point de référence
+PT001
+Point avec altitude connue (point fixe)
+Altitude de référence (m)
+502.872
+m
+Type de réseau
+Traverse ouverte
+ Paramètres de Précision
+2 mm
+Précision cible
+Précision cible
+
+2
+mm
+Niveau de confiance
+0.95
+%
+Généralement 0.95 (95%)
+ Paramètres Géodésiques Théorie σ² = a² + b²×d
+Erreur instrumentale (a)
+1
+mm
+Erreur fixe de l'instrument
+Erreur kilométrique (b)
+2
+mm/km
+Erreur proportionnelle à la distance
+
+ Corrections Atmosphériques
+Région prédéfinie
+-- Conditions personnalisées --
+Sélectionnez une région pour charger les conditions atmosphériques typiques
+Température
+32
+°C
+Pression
+1008
+hPa
+Humidité
+40
+%
+ Résumé de la Configuration
+Points à traiter : 5
+Point de référence : PT001
+Altitude référence : 502.872 m
+Type de réseau : ouvert
+Précision cible : 2 mm
+Paramètres géodésiques : a=1 mm, b=2 mm/km
+Corrections atmosphériques : Activées
+Niveau de confiance : 95%

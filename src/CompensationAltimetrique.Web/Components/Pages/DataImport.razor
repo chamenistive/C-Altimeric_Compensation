@@ -290,8 +290,8 @@
     {
         try
         {
-            var importer = new ExcelLevelingImporter();
-            var testData = importer.ImportFromFile("test");
+            var importer = new CompensationAltimetrique.Data.Importers.ExcelLevelingImporter();
+            var testData = importer.ImportLevelingData("simulation");
             
             await CompensationSvc.LoadData(testData);
             RefreshDisplayData();
@@ -308,8 +308,8 @@
     {
         try
         {
-            var importer = new ExcelLevelingImporter();
-            var testData = importer.ImportFromFile("test");
+            var importer = new CompensationAltimetrique.Data.Importers.ExcelLevelingImporter();
+            var testData = importer.ImportLevelingData("simulation");
             
             await CompensationSvc.LoadData(testData);
             RefreshDisplayData();
@@ -344,9 +344,9 @@
 
     private async Task ShowNotification(string message, NotificationModel.NotificationType type)
     {
-        // Implémentation des notifications Toast avec JS
-        var typeStr = type.ToString().ToLower();
-        await JSRuntime.InvokeVoidAsync("showToast", message, typeStr);
+        // TODO: Implémenter les notifications Toast
+        Console.WriteLine($"[{type}] {message}");
+        await Task.CompletedTask;
     }
 
     public void Dispose()
