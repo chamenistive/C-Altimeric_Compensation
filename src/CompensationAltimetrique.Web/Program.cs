@@ -9,6 +9,7 @@ builder.Services.AddRazorComponents()
 
 // Enregistrer nos services personnalisés
 builder.Services.AddScoped<CompensationService>();
+builder.Services.AddScoped<PdfReportService>();
 
 // Configuration pour les uploads de fichiers
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
