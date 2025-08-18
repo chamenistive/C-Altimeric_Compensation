@@ -3,6 +3,7 @@
 @using static CompensationAltimetrique.Web.Services.CompensationService
 @inject CompensationService CompensationSvc
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <PageTitle>Export - Compensation Altimétrique</PageTitle>
@@ -37,12 +38,12 @@
                                 <div class="card border-success">
                                     <div class="card-body text-center">
                                         <i class="bi bi-file-earmark-excel display-4 text-success mb-3"></i>
-                                        <h5>Fichier Excel</h5>
+                                        <h5>Fichier CSV</h5>
                                         <p class="text-muted">Données brutes et résultats calculés</p>
-                                        <button class="btn btn-outline-success" disabled>
-                                            <i class="bi bi-download"></i> Télécharger Excel
+                                        <button class="btn btn-outline-success" @onclick="ExportCsv">
+                                            <i class="bi bi-download"></i> Télécharger CSV
                                         </button>
-                                        <small class="d-block mt-2 text-muted">🚧 En développement</small>
+                                        <small class="d-block mt-2 text-success">✅ Fonctionnel</small>
                                     </div>
                                 </div>
                             </div>
@@ -153,9 +154,31 @@
                 WriteIndented = true
             });
 
-            // Note: Dans une vraie implémentation, on utiliserait IJSRuntime pour télécharger le fichier
-            // Pour l'instant, on affiche juste un message
-            await Task.Delay(500); // Simulation du téléchargement
+            // Téléchargement via JavaScript
+            var fileName = $"compensation_results_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            var dataUrl = $"data:application/json;charset=utf-8,{Uri.EscapeDataString(json)}";
+            await JSRuntime.InvokeVoidAsync("downloadFile", dataUrl, fileName);
+        }
+    }
+
+    private async Task ExportCsv()
+    {
+        if (CompensationSvc.HasResults && CompensationSvc.Results != null)
+        {
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Point,Altitude_Compensee_m,Correction_mm,Ecart_Type_mm,Statut");
+            
+            if (CompensationSvc.Results.AdjustedPoints != null)
+            {
+                foreach (var point in CompensationSvc.Results.AdjustedPoints)
+                {
+                    csv.AppendLine($"{point.Matricule},{point.Altitude:F4},N/A,{(point.Precision * 1000):F1},Validé");
+                }
+            }
+
+            var fileName = $"compensation_results_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var dataUrl = $"data:text/csv;charset=utf-8,{Uri.EscapeDataString(csv.ToString())}";
+            await JSRuntime.InvokeVoidAsync("downloadFile", dataUrl, fileName);
         }
     }
 }
